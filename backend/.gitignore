@@ -1,0 +1,102 @@
+# =============================================
+# MAVEN
+# =============================================
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# =============================================
+# JAVA
+# =============================================
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# =============================================
+# IDE - IntelliJ IDEA
+# =============================================
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# =============================================
+# IDE - Eclipse
+# =============================================
+.classpath
+.project
+.settings/
+bin/
+
+# =============================================
+# IDE - VS Code
+# =============================================
+.vscode/
+
+# =============================================
+# IDE - NetBeans
+# =============================================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =============================================
+# SPRING BOOT
+# =============================================
+*.log
+*.log.*
+logs/
+
+# =============================================
+# ARCHIVOS DE ENTORNO Y SECRETOS (IMPORTANTE)
+# =============================================
+.env
+.env.*
+*.env
+application-local.properties
+application-local.yml
+application-prod.properties
+application-prod.yml
+application-secret*.properties
+application-secret*.yml
+secrets/
+*.pem
+*.key
+*.p12
+*.jks
+
+# =============================================
+# BASE DE DATOS LOCAL
+# =============================================
+*.db
+*.sqlite
+*.h2.db
+data/
+
+# =============================================
+# SISTEMA OPERATIVO
+# =============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+*.swp
+*.swo
+
+# =============================================
+# TEMPORALES
+# =============================================
+*.tmp
+*.temp
+*.bak
+*.backup
