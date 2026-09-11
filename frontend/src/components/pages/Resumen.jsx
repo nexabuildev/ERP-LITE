@@ -9,9 +9,11 @@ import {
   getMisRegistrosTeletrabajo,
   getResumenAlertas,
   getResumenMovimientos,
+  getHistorialMovimientos,
   getMisMetasAhorro,
   getMisNominas,
 } from '../../api'
+import HistorialChart from '../HistorialChart'
 
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -32,10 +34,11 @@ function Resumen() {
       getMisRegistrosTeletrabajo(token),
       getResumenAlertas(token),
       getResumenMovimientos(token),
+      getHistorialMovimientos(token),
       getMisMetasAhorro(token),
       getMisNominas(token),
     ])
-      .then(([fichajes, saldo, declaraciones, teletrabajo, alertas, movimientos, ahorros, nominas]) => {
+      .then(([fichajes, saldo, declaraciones, teletrabajo, alertas, movimientos, historial, ahorros, nominas]) => {
         setData({
           fichajes,
           saldo,
@@ -43,6 +46,7 @@ function Resumen() {
           teletrabajo: teletrabajo[0],
           alertas,
           movimientos,
+          historial,
           ahorros,
           ultimaNomina: nominas[0],
         })
@@ -155,6 +159,27 @@ function Resumen() {
               </span>
             </Link>
           </div>
+
+          {data.historial?.puntos?.length > 0 && (
+            <div className="card">
+              <div className="card-header">
+                <div>
+                  <h2>Historial financiero</h2>
+                  <p>Ingresos, gastos y saldo neto acumulado de los últimos 6 meses.</p>
+                </div>
+                {data.historial.variacionPorcentaje != null && (
+                  <span className={`stat-block-value ${data.historial.variacionPorcentaje >= 0 ? 'amount-positive' : 'amount-negative'}`} style={{ fontSize: 22 }}>
+                    {data.historial.variacionPorcentaje >= 0 ? '+' : ''}
+                    {data.historial.variacionPorcentaje}%
+                    <span className="stat-block-hint" style={{ display: 'block', fontSize: 11 }}>
+                      vs mes anterior
+                    </span>
+                  </span>
+                )}
+              </div>
+              <HistorialChart puntos={data.historial.puntos} />
+            </div>
+          )}
 
           {data.ahorros.length > 0 && (
             <div className="card">

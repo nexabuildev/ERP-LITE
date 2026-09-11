@@ -1,7 +1,9 @@
 package com.rubensimon1.erp_lite.service;
 
+import com.rubensimon1.erp_lite.dto.HistorialMovimientosDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoInputDTO;
+import com.rubensimon1.erp_lite.dto.PuntoHistorialDTO;
 import com.rubensimon1.erp_lite.dto.ResumenMovimientosDTO;
 import com.rubensimon1.erp_lite.entity.CuentaBancaria;
 import com.rubensimon1.erp_lite.entity.Empleado;
@@ -17,7 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.YearMonth;
+import java.time.format.TextStyle;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,6 +90,64 @@ public class MovimientoService {
                 .totalGastos(redondear(totalGastos))
                 .movimientos(dtos)
                 .build();
+    }
+
+    public HistorialMovimientosDTO historial(Empleado empleado) {
+        int meses = 6;
+        YearMonth mesActual = YearMonth.now();
+        YearMonth mesInicio = mesActual.minusMonths(meses - 1);
+
+        List<Movimiento> movimientos = movimientoRepository.findByEmpleadoOrderByFechaDescIdDesc(empleado);
+
+        Map<YearMonth, double[]> porMes = new java.util.HashMap<>(); // [ingresos, gastos]
+        for (Movimiento m : movimientos) {
+            YearMonth ym = YearMonth.from(m.getFecha());
+            if (ym.isBefore(mesInicio) || ym.isAfter(mesActual)) continue;
+            double[] par = porMes.computeIfAbsent(ym, k -> new double[2]);
+            if (m.getTipo() == TipoMovimiento.INGRESO) par[0] += m.getImporte();
+            else par[1] += m.getImporte();
+        }
+
+        List<PuntoHistorialDTO> puntos = new ArrayList<>();
+        double acumulado = 0;
+        for (int i = 0; i < meses; i++) {
+            YearMonth ym = mesInicio.plusMonths(i);
+            double[] par = porMes.getOrDefault(ym, new double[2]);
+            double ingresos = redondear(par[0]);
+            double gastos = redondear(par[1]);
+            double neto = redondear(ingresos - gastos);
+            acumulado = redondear(acumulado + neto);
+
+            String etiqueta = capitalizar(ym.getMonth().getDisplayName(TextStyle.SHORT, new Locale("es", "ES"))) + " " + ym.getYear();
+
+            puntos.add(PuntoHistorialDTO.builder()
+                    .periodo(ym.toString())
+                    .etiqueta(etiqueta)
+                    .ingresos(ingresos)
+                    .gastos(gastos)
+                    .neto(neto)
+                    .saldoAcumulado(acumulado)
+                    .build());
+        }
+
+        Double variacion = null;
+        if (puntos.size() >= 2) {
+            double netoUltimo = puntos.get(puntos.size() - 1).getNeto();
+            double netoAnterior = puntos.get(puntos.size() - 2).getNeto();
+            if (netoAnterior != 0) {
+                variacion = redondear(((netoUltimo - netoAnterior) / Math.abs(netoAnterior)) * 100.0);
+            }
+        }
+
+        return HistorialMovimientosDTO.builder()
+                .puntos(puntos)
+                .variacionPorcentaje(variacion)
+                .build();
+    }
+
+    private String capitalizar(String texto) {
+        if (texto == null || texto.isBlank()) return texto;
+        return texto.substring(0, 1).toUpperCase() + texto.substring(1);
     }
 
     private void aplicarDatos(Movimiento movimiento, MovimientoInputDTO input, Empleado empleado) {

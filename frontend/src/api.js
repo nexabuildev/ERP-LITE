@@ -273,6 +273,10 @@ export function getResumenMovimientos(token) {
   return request('/api/v1/movimientos/mios/resumen', token)
 }
 
+export function getHistorialMovimientos(token) {
+  return request('/api/v1/movimientos/mios/historial', token)
+}
+
 // --- SIMULADOR DE NÓMINA ---
 
 export function simularNomina(token, nuevoSalarioBrutoAnual) {

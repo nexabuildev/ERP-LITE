@@ -1,5 +1,6 @@
 package com.rubensimon1.erp_lite.controller;
 
+import com.rubensimon1.erp_lite.dto.HistorialMovimientosDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoInputDTO;
 import com.rubensimon1.erp_lite.dto.ResumenMovimientosDTO;
@@ -40,5 +41,10 @@ public class MovimientoController {
     @GetMapping("/mios/resumen")
     public ResumenMovimientosDTO resumen(@AuthenticationPrincipal Empleado empleado) {
         return movimientoService.resumen(empleado);
+    }
+
+    @GetMapping("/mios/historial")
+    public HistorialMovimientosDTO historial(@AuthenticationPrincipal Empleado empleado) {
+        return movimientoService.historial(empleado);
     }
 }
