@@ -48,6 +48,23 @@ public class Empleado implements UserDetails {
     @JoinColumn(name = "departamento_id")
     private Departamento departamento;
 
+    // --- PORTAL DEL EMPLEADO ---
+
+    @Enumerated(EnumType.STRING)
+    private TipoTrabajador tipoTrabajador; // ASALARIADO o AUTONOMO
+
+    @Enumerated(EnumType.STRING)
+    private Genero genero; // Usado solo para el registro retributivo (RD 902/2020)
+
+    private String categoriaProfesional; // Puesto/categoria, usado para comparar salarios
+
+    private Double salarioBrutoAnual;
+
+    // --- Campos solo relevantes si tipoTrabajador = AUTONOMO ---
+    private String nif;
+    private String epigrafeIae;
+    private java.time.LocalDate fechaAltaAutonomo;
+
     // --- MÉTODOS DE USER DETAILS (Contrato de Seguridad) ---
 
     @Override

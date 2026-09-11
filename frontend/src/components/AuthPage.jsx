@@ -36,9 +36,8 @@ function AuthPage({ onAuthSuccess }) {
     <div className="auth-screen">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="auth-logo">🚀</span>
-          <h1>ERP Lite</h1>
-          <p>{isLogin ? 'Inicia sesión para continuar' : 'Crea tu cuenta para empezar'}</p>
+          <h1>LEGAJO</h1>
+          <p>{isLogin ? 'Portal del empleado — inicia sesión' : 'Crea tu cuenta de empleado'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
