@@ -12,6 +12,8 @@ import {
   getHistorialMovimientos,
   getMisMetasAhorro,
   getMisNominas,
+  getWrapped,
+  getSaludAdministrativa,
 } from '../../api'
 import HistorialChart from '../HistorialChart'
 
@@ -37,8 +39,10 @@ function Resumen() {
       getHistorialMovimientos(token),
       getMisMetasAhorro(token),
       getMisNominas(token),
+      getWrapped(token),
+      getSaludAdministrativa(token),
     ])
-      .then(([fichajes, saldo, declaraciones, teletrabajo, alertas, movimientos, historial, ahorros, nominas]) => {
+      .then(([fichajes, saldo, declaraciones, teletrabajo, alertas, movimientos, historial, ahorros, nominas, wrapped, salud]) => {
         setData({
           fichajes,
           saldo,
@@ -49,6 +53,8 @@ function Resumen() {
           historial,
           ahorros,
           ultimaNomina: nominas[0],
+          wrapped,
+          salud,
         })
       })
       .catch((err) => setError(err.message))
@@ -178,6 +184,85 @@ function Resumen() {
                 )}
               </div>
               <HistorialChart puntos={data.historial.puntos} />
+            </div>
+          )}
+
+          {data.wrapped && (
+            <div className="card">
+              <h2>Resumen de {data.wrapped.mesEtiqueta}</h2>
+              <div className="report-grid">
+                <div>
+                  <span className="muted">Ingresos</span>
+                  <strong className="amount-positive">+{data.wrapped.ingresos.toFixed(2)} €</strong>
+                </div>
+                <div>
+                  <span className="muted">Gastos</span>
+                  <strong className="amount-negative">-{data.wrapped.gastos.toFixed(2)} €</strong>
+                </div>
+                <div>
+                  <span className="muted">Balance del mes</span>
+                  <strong className={data.wrapped.balance >= 0 ? 'amount-positive' : 'amount-negative'}>
+                    {data.wrapped.balance.toFixed(2)} €
+                  </strong>
+                </div>
+                {data.wrapped.variacionBalancePorcentaje != null && (
+                  <div>
+                    <span className="muted">Vs. mes anterior</span>
+                    <strong className={data.wrapped.variacionBalancePorcentaje >= 0 ? 'amount-positive' : 'amount-negative'}>
+                      {data.wrapped.variacionBalancePorcentaje >= 0 ? '+' : ''}
+                      {data.wrapped.variacionBalancePorcentaje}%
+                    </strong>
+                  </div>
+                )}
+                {data.wrapped.categoriaTopGasto && (
+                  <div>
+                    <span className="muted">Mayor gasto</span>
+                    <strong>{data.wrapped.categoriaTopGasto}</strong>
+                  </div>
+                )}
+                <div>
+                  <span className="muted">Vacaciones disfrutadas</span>
+                  <strong>{data.wrapped.diasVacacionesDisfrutados} días</strong>
+                </div>
+                <div>
+                  <span className="muted">Horas trabajadas</span>
+                  <strong>{data.wrapped.horasTrabajadas} h</strong>
+                </div>
+                <div>
+                  <span className="muted">Días de teletrabajo</span>
+                  <strong>{data.wrapped.diasTeletrabajados}</strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {data.salud && (
+            <div className="card">
+              <div className="card-header">
+                <div>
+                  <h2>Salud administrativa</h2>
+                  <p>Cómo de al día están tu perfil, tus alertas, tus declaraciones y tus cuentas.</p>
+                </div>
+                <span
+                  className="stat-block-value"
+                  style={{ fontSize: 40, color: data.salud.puntuacion >= 70 ? 'var(--accent)' : 'inherit' }}
+                >
+                  {data.salud.puntuacion}
+                </span>
+              </div>
+              <div className="ledger">
+                {data.salud.factores.map((f, i) => (
+                  <div key={i} className="ledger-row">
+                    <div className="ledger-info">
+                      <span className="ledger-concepto">{f.etiqueta}</span>
+                      <span className="muted small">{f.mensaje}</span>
+                    </div>
+                    <span className="bold">
+                      {f.puntos}/{f.puntosMaximos}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

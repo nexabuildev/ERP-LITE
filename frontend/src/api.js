@@ -88,6 +88,20 @@ export function eliminarCuentaDefinitivamente(token, data) {
   })
 }
 
+export function getExpedienteExportado(token) {
+  return request('/api/v1/perfil/exportar', token)
+}
+
+// --- RESUMEN (wrapped y salud administrativa) ---
+
+export function getWrapped(token) {
+  return request('/api/v1/resumen/wrapped', token)
+}
+
+export function getSaludAdministrativa(token) {
+  return request('/api/v1/resumen/salud', token)
+}
+
 // --- FICHAJES ---
 
 export function ficharEntrada(token) {
@@ -320,6 +334,10 @@ export function getResumenMovimientos(token, { mes, anio } = {}) {
 
 export function getHistorialMovimientos(token) {
   return request('/api/v1/movimientos/mios/historial', token)
+}
+
+export function getIncrementosGastos(token) {
+  return request('/api/v1/movimientos/mios/incrementos', token)
 }
 
 // --- SIMULADOR DE NÓMINA ---

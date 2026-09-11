@@ -7,6 +7,7 @@ import {
   getResumenMovimientos,
   getMisCuentasBancarias,
   getMisMetodosPago,
+  getIncrementosGastos,
 } from '../../api'
 import { formatDate, hoyISO } from '../../utils/date'
 
@@ -67,6 +68,7 @@ function Movimientos() {
   const [resumen, setResumen] = useState(null)
   const [cuentas, setCuentas] = useState([])
   const [metodos, setMetodos] = useState([])
+  const [incrementos, setIncrementos] = useState([])
   const [concepto, setConcepto] = useState('')
   const [importe, setImporte] = useState('')
   const [tipo, setTipo] = useState('GASTO')
@@ -87,6 +89,7 @@ function Movimientos() {
     getResumenMovimientos(token, filtro).then(setResumen).catch((err) => setError(err.message))
     getMisCuentasBancarias(token).then(setCuentas).catch(() => {})
     getMisMetodosPago(token).then(setMetodos).catch(() => {})
+    getIncrementosGastos(token).then(setIncrementos).catch(() => {})
   }, [token, filtroMes, filtroAnio])
 
   useEffect(cargar, [cargar])
@@ -173,6 +176,28 @@ function Movimientos() {
           <div className="stat-block">
             <span className="stat-block-label">Gastos</span>
             <span className="stat-block-value amount-negative">-{resumen.totalGastos.toFixed(2)} €</span>
+          </div>
+        </div>
+      )}
+
+      {incrementos.length > 0 && (
+        <div className="card card-highlight">
+          <h2>Posibles subidas de precio</h2>
+          <p className="muted small" style={{ marginTop: -8 }}>
+            Estos gastos que se repiten han costado más la última vez que la anterior.
+          </p>
+          <div className="ledger">
+            {incrementos.map((inc, i) => (
+              <div key={i} className="ledger-row">
+                <div className="ledger-info">
+                  <span className="ledger-concepto">{inc.concepto}</span>
+                  <span className="muted small">
+                    {inc.importeAnterior.toFixed(2)} € ({inc.fechaAnterior}) → {inc.importeActual.toFixed(2)} € ({inc.fechaActual})
+                  </span>
+                </div>
+                <span className="amount-negative bold">+{inc.incrementoPorcentaje}%</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

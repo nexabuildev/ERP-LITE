@@ -8,6 +8,7 @@ import {
   reactivarCuentaPropia,
   eliminarCuentaDefinitivamente,
   getResumenCuentas,
+  getExpedienteExportado,
 } from '../../api'
 
 const PALABRA_CONFIRMACION = 'DELETE-CUENTA'
@@ -29,6 +30,9 @@ function Perfil() {
   const [zonaPeligro, setZonaPeligro] = useState({ confirmacion: '', passwordActual: '' })
   const [zonaPeligroError, setZonaPeligroError] = useState(null)
   const [accionEnCurso, setAccionEnCurso] = useState(null) // 'desactivar' | 'eliminar' | 'reactivar' | null
+
+  const [exportando, setExportando] = useState(false)
+  const [exportError, setExportError] = useState(null)
 
   useEffect(() => {
     getPerfil(token)
@@ -165,6 +169,27 @@ function Perfil() {
     } catch (err) {
       setZonaPeligroError(err.message)
       setAccionEnCurso(null)
+    }
+  }
+
+  const handleExportar = async () => {
+    setExportError(null)
+    setExportando(true)
+    try {
+      const expediente = await getExpedienteExportado(token)
+      const blob = new Blob([JSON.stringify(expediente, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `expediente-ziviko-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(enlace)
+      enlace.click()
+      enlace.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setExportError(err.message)
+    } finally {
+      setExportando(false)
     }
   }
 
@@ -429,6 +454,17 @@ function Perfil() {
             {credLoading ? 'Guardando...' : 'Actualizar credenciales'}
           </button>
         </form>
+      </div>
+
+      <div className="card" style={{ marginTop: 24 }}>
+        <h2>Descarga tu expediente</h2>
+        <p className="muted small" style={{ marginTop: -8 }}>
+          Un archivo JSON con todos tus datos: perfil, cuentas, movimientos, nóminas, vacaciones, declaraciones y más.
+        </p>
+        {exportError && <div className="alert alert-error">⚠️ {exportError}</div>}
+        <button type="button" className="btn-small" onClick={handleExportar} disabled={exportando}>
+          {exportando ? 'Generando...' : 'Descargar mi expediente (JSON)'}
+        </button>
       </div>
 
       <div className="card" style={{ marginTop: 24, borderColor: 'var(--accent)' }}>

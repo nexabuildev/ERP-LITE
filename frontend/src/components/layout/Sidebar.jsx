@@ -1,68 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import ThemeToggle from '../ThemeToggle'
-
-const NAV_ENTRIES = [
-  { type: 'link', to: '/', label: 'Resumen', num: '00', end: true },
-  { type: 'link', to: '/alertas', label: 'Alertas', num: '01' },
-  {
-    type: 'group',
-    id: 'trabajo',
-    label: 'Trabajo',
-    items: [
-      { to: '/fichajes', label: 'Fichajes', num: '02' },
-      { to: '/vacaciones', label: 'Vacaciones', num: '03' },
-      { to: '/nominas', label: 'Nóminas', num: '04' },
-      { to: '/registro-retributivo', label: 'Registro retributivo', num: '05' },
-      { to: '/declaraciones', label: 'Declaraciones', num: '06' },
-      { to: '/teletrabajo', label: 'Teletrabajo', num: '07' },
-      { to: '/empresas', label: 'Empresas', num: '08' },
-      { to: '/paro', label: 'Paro', num: '09' },
-    ],
-  },
-  {
-    type: 'group',
-    id: 'dinero',
-    label: 'Dinero',
-    items: [
-      { to: '/movimientos', label: 'Movimientos', num: '10' },
-      { to: '/ahorros', label: 'Ahorros', num: '11' },
-      { to: '/cuentas-bancarias', label: 'Cuentas y efectivo', num: '12' },
-      { to: '/metodos-pago', label: 'Métodos de pago', num: '13' },
-      { to: '/simulador', label: 'Simulador de sueldo', num: '14' },
-    ],
-  },
-  { type: 'link', to: '/perfil', label: 'Perfil', num: '15' },
-]
-
-function grupoDeRuta(pathname) {
-  for (const entry of NAV_ENTRIES) {
-    if (entry.type === 'group' && entry.items.some((item) => pathname.startsWith(item.to))) {
-      return entry.id
-    }
-  }
-  return null
-}
+import { NAV_ENTRIES, grupoDeRuta } from './navEntries'
 
 function Sidebar({ perfil, onLogout, alertasPendientes = 0 }) {
   const location = useLocation()
-  const [abiertos, setAbiertos] = useState(() => {
-    const activo = grupoDeRuta(location.pathname)
-    return activo ? new Set([activo]) : new Set()
-  })
+  const grupoActivo = grupoDeRuta(location.pathname)
+  // Solo guardamos los cambios manuales del usuario; el grupo de la página
+  // activa se considera abierto por defecto salvo que lo haya cerrado a mano.
+  const [overrides, setOverrides] = useState(() => new Map())
 
-  useEffect(() => {
-    const activo = grupoDeRuta(location.pathname)
-    if (activo) {
-      setAbiertos((prev) => (prev.has(activo) ? prev : new Set(prev).add(activo)))
-    }
-  }, [location.pathname])
+  const estaAbierto = (id) => {
+    if (overrides.has(id)) return overrides.get(id)
+    return id === grupoActivo
+  }
 
   const toggleGrupo = (id) => {
-    setAbiertos((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+    setOverrides((prev) => {
+      const next = new Map(prev)
+      next.set(id, !estaAbierto(id))
       return next
     })
   }
@@ -93,7 +49,7 @@ function Sidebar({ perfil, onLogout, alertasPendientes = 0 }) {
             )
           }
 
-          const abierto = abiertos.has(entry.id)
+          const abierto = estaAbierto(entry.id)
           return (
             <div key={entry.id} className="sidebar-group">
               <button

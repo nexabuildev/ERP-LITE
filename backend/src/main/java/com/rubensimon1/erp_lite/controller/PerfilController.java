@@ -3,9 +3,11 @@ package com.rubensimon1.erp_lite.controller;
 import com.rubensimon1.erp_lite.dto.CambiarCredencialesDTO;
 import com.rubensimon1.erp_lite.dto.CredencialesActualizadasDTO;
 import com.rubensimon1.erp_lite.dto.EliminarCuentaInputDTO;
+import com.rubensimon1.erp_lite.dto.ExpedienteExportDTO;
 import com.rubensimon1.erp_lite.dto.PerfilDTO;
 import com.rubensimon1.erp_lite.dto.PerfilUpdateDTO;
 import com.rubensimon1.erp_lite.entity.Empleado;
+import com.rubensimon1.erp_lite.service.ExportService;
 import com.rubensimon1.erp_lite.service.PerfilService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,12 @@ import org.springframework.web.bind.annotation.*;
 public class PerfilController {
 
     private final PerfilService perfilService;
+    private final ExportService exportService;
+
+    @GetMapping("/exportar")
+    public ExpedienteExportDTO exportar(@AuthenticationPrincipal Empleado empleado) {
+        return exportService.exportar(empleado);
+    }
 
     @GetMapping("/mio")
     public PerfilDTO miPerfil(@AuthenticationPrincipal Empleado empleado) {
