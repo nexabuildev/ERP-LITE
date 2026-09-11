@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 
 @RestController // <--- Importante: Convierte esto en una API REST
 @RequestMapping("/api/v1/empleados") // <--- La URL base
-@CrossOrigin(origins = "http://localhost:5173")
 public class EmpleadoController {
     /*
      * Variable de tipo EmpleadoService
