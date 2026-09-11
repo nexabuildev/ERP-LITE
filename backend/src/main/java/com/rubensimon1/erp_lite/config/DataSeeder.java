@@ -9,18 +9,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import com.rubensimon1.erp_lite.entity.AjusteVacaciones;
 import com.rubensimon1.erp_lite.entity.Alerta;
+import com.rubensimon1.erp_lite.entity.CategoriaCuenta;
 import com.rubensimon1.erp_lite.entity.CuentaBancaria;
+import com.rubensimon1.erp_lite.entity.TipoCuenta;
 import com.rubensimon1.erp_lite.entity.DeclaracionPresentada;
 import com.rubensimon1.erp_lite.entity.Departamento;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.entity.EstadoVacacion;
 import com.rubensimon1.erp_lite.entity.Genero;
 import com.rubensimon1.erp_lite.entity.MetaAhorro;
+import com.rubensimon1.erp_lite.entity.MetodoPago;
 import com.rubensimon1.erp_lite.entity.Movimiento;
 import com.rubensimon1.erp_lite.entity.Nomina;
 import com.rubensimon1.erp_lite.entity.Producto;
 import com.rubensimon1.erp_lite.entity.Role;
 import com.rubensimon1.erp_lite.entity.SolicitudVacaciones;
+import com.rubensimon1.erp_lite.entity.TipoMetodoPago;
 import com.rubensimon1.erp_lite.entity.TipoMovimiento;
 import com.rubensimon1.erp_lite.entity.TipoPago;
 import com.rubensimon1.erp_lite.entity.TipoTrabajador;
@@ -31,6 +35,7 @@ import com.rubensimon1.erp_lite.repository.DeclaracionPresentadaRepository;
 import com.rubensimon1.erp_lite.repository.DepartamentoRepository;
 import com.rubensimon1.erp_lite.repository.EmpleadoRepository;
 import com.rubensimon1.erp_lite.repository.MetaAhorroRepository;
+import com.rubensimon1.erp_lite.repository.MetodoPagoRepository;
 import com.rubensimon1.erp_lite.repository.MovimientoRepository;
 import com.rubensimon1.erp_lite.repository.NominaRepository;
 import com.rubensimon1.erp_lite.repository.SolicitudVacacionesRepository;
@@ -52,6 +57,7 @@ public class DataSeeder implements CommandLineRunner {
     private final AlertaRepository alertaRepository;
     private final AjusteVacacionesRepository ajusteVacacionesRepository;
     private final DeclaracionPresentadaRepository declaracionPresentadaRepository;
+    private final MetodoPagoRepository metodoPagoRepository;
     private final PasswordEncoder passwordEncoder;
 
     /*
@@ -69,6 +75,7 @@ public class DataSeeder implements CommandLineRunner {
             AlertaRepository alertaRepository,
             AjusteVacacionesRepository ajusteVacacionesRepository,
             DeclaracionPresentadaRepository declaracionPresentadaRepository,
+            MetodoPagoRepository metodoPagoRepository,
             PasswordEncoder passwordEncoder) {
         this.departamentoRepository = departamentoRepository;
         this.empleadoRepository = empleadoRepository;
@@ -80,6 +87,7 @@ public class DataSeeder implements CommandLineRunner {
         this.movimientoRepository = movimientoRepository;
         this.alertaRepository = alertaRepository;
         this.ajusteVacacionesRepository = ajusteVacacionesRepository;
+        this.metodoPagoRepository = metodoPagoRepository;
         this.declaracionPresentadaRepository = declaracionPresentadaRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -234,10 +242,38 @@ public class DataSeeder implements CommandLineRunner {
             CuentaBancaria cuenta = new CuentaBancaria();
             cuenta.setEmpleado(dev);
             cuenta.setAlias("Cuenta principal");
+            cuenta.setCategoria(CategoriaCuenta.BANCO);
+            cuenta.setTipoCuenta(TipoCuenta.PRINCIPAL);
             cuenta.setIban("ES91 2100 0418 4502 0005 1332");
             cuenta.setBanco("Banco Ejemplo");
-            cuenta.setPrincipal(true);
-            cuentaBancariaRepository.save(cuenta);
+            cuenta.setSaldoActual(2450.30);
+
+            CuentaBancaria efectivo = new CuentaBancaria();
+            efectivo.setEmpleado(dev);
+            efectivo.setAlias("Cartera");
+            efectivo.setCategoria(CategoriaCuenta.EFECTIVO);
+            efectivo.setTipoCuenta(TipoCuenta.SECUNDARIA);
+            efectivo.setSaldoActual(60.0);
+
+            cuentaBancariaRepository.saveAll(List.of(cuenta, efectivo));
+
+            MetodoPago tarjeta = new MetodoPago();
+            tarjeta.setEmpleado(dev);
+            tarjeta.setTipo(TipoMetodoPago.TARJETA);
+            tarjeta.setAlias("Visa personal");
+            tarjeta.setTitular("Ruben Developer");
+            tarjeta.setNumero("4242424242424242");
+            tarjeta.setFechaCaducidad("09/29");
+            tarjeta.setCvv("123");
+            tarjeta.setCuentaVinculada(cuenta);
+            metodoPagoRepository.save(tarjeta);
+
+            MetodoPago paypal = new MetodoPago();
+            paypal.setEmpleado(dev);
+            paypal.setTipo(TipoMetodoPago.PAYPAL);
+            paypal.setAlias("PayPal compras online");
+            paypal.setEmailPaypal("ruben@erplite.com");
+            metodoPagoRepository.save(paypal);
 
             MetaAhorro meta = new MetaAhorro();
             meta.setEmpleado(dev);

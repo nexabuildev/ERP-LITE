@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { anadirCuentaBancaria, getMisCuentasBancarias, eliminarCuentaBancaria } from '../../api'
+import { anadirCuentaBancaria, editarCuentaBancaria, eliminarCuentaBancaria, getResumenCuentas } from '../../api'
+
+const VACIO = { alias: '', categoria: 'BANCO', tipoCuenta: 'PRINCIPAL', iban: '', banco: '', saldoActual: '' }
 
 function CuentasBancarias() {
   const { token } = useOutletContext()
-  const [cuentas, setCuentas] = useState([])
-  const [alias, setAlias] = useState('')
-  const [iban, setIban] = useState('')
-  const [banco, setBanco] = useState('')
-  const [principal, setPrincipal] = useState(false)
+  const [resumen, setResumen] = useState(null)
+  const [form, setForm] = useState(VACIO)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  const [editandoId, setEditandoId] = useState(null)
+  const [editForm, setEditForm] = useState(null)
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+
   const cargar = useCallback(() => {
-    getMisCuentasBancarias(token).then(setCuentas).catch((err) => setError(err.message))
+    getResumenCuentas(token).then(setResumen).catch((err) => setError(err.message))
   }, [token])
 
   useEffect(cargar, [cargar])
@@ -23,16 +26,44 @@ function CuentasBancarias() {
     setError(null)
     setLoading(true)
     try {
-      await anadirCuentaBancaria(token, { alias, iban, banco, principal })
-      setAlias('')
-      setIban('')
-      setBanco('')
-      setPrincipal(false)
+      await anadirCuentaBancaria(token, { ...form, saldoActual: Number(form.saldoActual) || 0 })
+      setForm(VACIO)
       cargar()
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const empezarEdicion = (c) => {
+    setEditandoId(c.id)
+    setEditForm({
+      alias: c.alias,
+      categoria: c.categoria,
+      tipoCuenta: c.tipoCuenta,
+      iban: c.iban || '',
+      banco: c.banco || '',
+      saldoActual: c.saldoActual,
+    })
+  }
+
+  const cancelarEdicion = () => {
+    setEditandoId(null)
+    setEditForm(null)
+  }
+
+  const guardarEdicion = async (id) => {
+    setError(null)
+    setGuardandoEdicion(true)
+    try {
+      await editarCuentaBancaria(token, id, { ...editForm, saldoActual: Number(editForm.saldoActual) || 0 })
+      cancelarEdicion()
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGuardandoEdicion(false)
     }
   }
 
@@ -46,35 +77,72 @@ function CuentasBancarias() {
     }
   }
 
+  const esBanco = form.categoria === 'BANCO'
+
   return (
     <div>
       <header className="page-header">
-        <span className="page-eyebrow">Mis cuentas</span>
-        <h1>Cuentas bancarias</h1>
-        <p>Guarda tus IBAN para tener a mano dónde recibes tu nómina y tus ahorros.</p>
+        <span className="page-eyebrow">¿Dónde tengo mi dinero?</span>
+        <h1>Cuentas y efectivo</h1>
+        <p>Cuentas bancarias, efectivo en cartera... todo con su saldo, para saber cuánto tienes en total.</p>
       </header>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
 
+      {resumen && (
+        <div className="stats-grid stats-grid-compact">
+          <div className="stat-block">
+            <span className="stat-block-label">Total</span>
+            <span className="stat-block-value">{resumen.totalGeneral.toFixed(2)} €</span>
+          </div>
+          <div className="stat-block">
+            <span className="stat-block-label">En bancos</span>
+            <span className="stat-block-value">{resumen.totalBanco.toFixed(2)} €</span>
+          </div>
+          <div className="stat-block">
+            <span className="stat-block-label">En efectivo</span>
+            <span className="stat-block-value">{resumen.totalEfectivo.toFixed(2)} €</span>
+          </div>
+        </div>
+      )}
+
       <div className="card">
-        <h2>Añadir cuenta</h2>
+        <h2>Añadir cuenta o efectivo</h2>
         <form onSubmit={handleSubmit} className="inline-form">
           <div className="field">
-            <label>Alias</label>
-            <input type="text" value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Cuenta principal" required />
-          </div>
-          <div className="field field-grow">
-            <label>IBAN</label>
-            <input type="text" value={iban} onChange={(e) => setIban(e.target.value)} placeholder="ES91 2100 0418..." required />
+            <label>Categoría</label>
+            <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}>
+              <option value="BANCO">Cuenta bancaria</option>
+              <option value="EFECTIVO">Efectivo</option>
+            </select>
           </div>
           <div className="field">
-            <label>Banco</label>
-            <input type="text" value={banco} onChange={(e) => setBanco(e.target.value)} placeholder="Opcional" />
+            <label>Tipo</label>
+            <select value={form.tipoCuenta} onChange={(e) => setForm({ ...form, tipoCuenta: e.target.value })}>
+              <option value="PRINCIPAL">Principal</option>
+              <option value="SECUNDARIA">Secundaria</option>
+              <option value="OTRA">Otra</option>
+            </select>
           </div>
-          <div className="field field-checkbox">
-            <label>
-              <input type="checkbox" checked={principal} onChange={(e) => setPrincipal(e.target.checked)} /> Principal
-            </label>
+          <div className="field field-grow">
+            <label>Alias</label>
+            <input type="text" value={form.alias} onChange={(e) => setForm({ ...form, alias: e.target.value })} placeholder="Cuenta nómina" required />
+          </div>
+          {esBanco && (
+            <>
+              <div className="field field-grow">
+                <label>IBAN</label>
+                <input type="text" value={form.iban} onChange={(e) => setForm({ ...form, iban: e.target.value })} placeholder="ES91 2100 0418..." required />
+              </div>
+              <div className="field">
+                <label>Banco</label>
+                <input type="text" value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="Opcional" />
+              </div>
+            </>
+          )}
+          <div className="field">
+            <label>Saldo actual (€)</label>
+            <input type="number" step="0.01" value={form.saldoActual} onChange={(e) => setForm({ ...form, saldoActual: e.target.value })} required />
           </div>
           <button className="btn-primary" disabled={loading}>
             {loading ? 'Guardando...' : 'Añadir'}
@@ -82,36 +150,96 @@ function CuentasBancarias() {
         </form>
       </div>
 
-      {cuentas.length === 0 && !error && <p className="empty-state">Todavía no has añadido ninguna cuenta.</p>}
+      {resumen?.cuentas?.length === 0 && <p className="empty-state">Todavía no has añadido ninguna cuenta.</p>}
 
-      {cuentas.length > 0 && (
-        <div className="card table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Alias</th>
-                <th>IBAN</th>
-                <th>Banco</th>
-                <th></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {cuentas.map((c) => (
-                <tr key={c.id}>
-                  <td className="bold">{c.alias}</td>
-                  <td className="muted">{c.iban}</td>
-                  <td className="muted">{c.banco || '—'}</td>
-                  <td>{c.principal && <span className="badge badge-aprobada">Principal</span>}</td>
-                  <td className="actions">
-                    <button className="btn-small btn-danger" onClick={() => borrar(c.id)}>
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {resumen?.cuentas?.length > 0 && (
+        <div className="report-list">
+          {resumen.cuentas.map((c) =>
+            editandoId === c.id ? (
+              <div key={c.id} className="card report-card">
+                <h2>Editando {c.alias}</h2>
+                <div className="inline-form" style={{ marginTop: 12 }}>
+                  <div className="field">
+                    <label>Categoría</label>
+                    <select value={editForm.categoria} onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })}>
+                      <option value="BANCO">Cuenta bancaria</option>
+                      <option value="EFECTIVO">Efectivo</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Tipo</label>
+                    <select value={editForm.tipoCuenta} onChange={(e) => setEditForm({ ...editForm, tipoCuenta: e.target.value })}>
+                      <option value="PRINCIPAL">Principal</option>
+                      <option value="SECUNDARIA">Secundaria</option>
+                      <option value="OTRA">Otra</option>
+                    </select>
+                  </div>
+                  <div className="field field-grow">
+                    <label>Alias</label>
+                    <input type="text" value={editForm.alias} onChange={(e) => setEditForm({ ...editForm, alias: e.target.value })} />
+                  </div>
+                  {editForm.categoria === 'BANCO' && (
+                    <>
+                      <div className="field field-grow">
+                        <label>IBAN</label>
+                        <input type="text" value={editForm.iban} onChange={(e) => setEditForm({ ...editForm, iban: e.target.value })} />
+                      </div>
+                      <div className="field">
+                        <label>Banco</label>
+                        <input type="text" value={editForm.banco} onChange={(e) => setEditForm({ ...editForm, banco: e.target.value })} />
+                      </div>
+                    </>
+                  )}
+                  <div className="field">
+                    <label>Saldo actual (€)</label>
+                    <input type="number" step="0.01" value={editForm.saldoActual} onChange={(e) => setEditForm({ ...editForm, saldoActual: e.target.value })} />
+                  </div>
+                  <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(c.id)}>
+                    Guardar
+                  </button>
+                  <button className="btn-small" onClick={cancelarEdicion}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div key={c.id} className="card report-card">
+                <div className="report-card-header">
+                  <h2>{c.alias}</h2>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span className="badge badge-normal">{c.categoria === 'BANCO' ? 'Banco' : 'Efectivo'}</span>
+                    <span className={`badge ${c.tipoCuenta === 'PRINCIPAL' ? 'badge-aprobada' : 'badge-pendiente'}`}>{c.tipoCuenta}</span>
+                  </div>
+                </div>
+                <div className="report-grid">
+                  {c.categoria === 'BANCO' && (
+                    <>
+                      <div>
+                        <span className="muted">IBAN</span>
+                        <strong className="mono">{c.iban}</strong>
+                      </div>
+                      <div>
+                        <span className="muted">Banco</span>
+                        <strong>{c.banco || '—'}</strong>
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <span className="muted">Saldo actual</span>
+                    <strong className="accent">{c.saldoActual.toFixed(2)} €</strong>
+                  </div>
+                </div>
+                <div className="inline-form" style={{ marginTop: 16 }}>
+                  <button className="btn-small" onClick={() => empezarEdicion(c)}>
+                    Editar
+                  </button>
+                  <button className="btn-small btn-danger" onClick={() => borrar(c.id)}>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            )
+          )}
         </div>
       )}
     </div>

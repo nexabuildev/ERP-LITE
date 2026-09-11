@@ -24,6 +24,13 @@ public class MovimientoController {
         return movimientoService.registrar(empleado, input);
     }
 
+    @PutMapping("/{id}")
+    public MovimientoDTO actualizar(@AuthenticationPrincipal Empleado empleado,
+                                     @PathVariable Long id,
+                                     @RequestBody @Valid MovimientoInputDTO input) {
+        return movimientoService.actualizar(empleado, id, input);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@AuthenticationPrincipal Empleado empleado, @PathVariable Long id) {
         movimientoService.eliminar(empleado, id);

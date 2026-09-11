@@ -2,6 +2,7 @@ package com.rubensimon1.erp_lite.controller;
 
 import com.rubensimon1.erp_lite.dto.CuentaBancariaDTO;
 import com.rubensimon1.erp_lite.dto.CuentaBancariaInputDTO;
+import com.rubensimon1.erp_lite.dto.ResumenCuentasDTO;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.service.CuentaBancariaService;
 import jakarta.validation.Valid;
@@ -28,6 +29,18 @@ public class CuentaBancariaController {
     @GetMapping("/mias")
     public List<CuentaBancariaDTO> misCuentas(@AuthenticationPrincipal Empleado empleado) {
         return cuentaBancariaService.misCuentas(empleado);
+    }
+
+    @GetMapping("/resumen")
+    public ResumenCuentasDTO resumen(@AuthenticationPrincipal Empleado empleado) {
+        return cuentaBancariaService.resumen(empleado);
+    }
+
+    @PutMapping("/{id}")
+    public CuentaBancariaDTO actualizar(@AuthenticationPrincipal Empleado empleado,
+                                         @PathVariable Long id,
+                                         @RequestBody @Valid CuentaBancariaInputDTO input) {
+        return cuentaBancariaService.actualizar(empleado, id, input);
     }
 
     @DeleteMapping("/{id}")

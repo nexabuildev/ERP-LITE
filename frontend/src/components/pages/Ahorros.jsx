@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { crearMetaAhorro, getMisMetasAhorro, aportarAhorro, retirarAhorro, eliminarMetaAhorro } from '../../api'
+import { crearMetaAhorro, getMisMetasAhorro, editarMetaAhorro, aportarAhorro, retirarAhorro, eliminarMetaAhorro } from '../../api'
 
 function Ahorros() {
   const { token } = useOutletContext()
@@ -11,6 +11,10 @@ function Ahorros() {
   const [aportaciones, setAportaciones] = useState({})
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const [editandoId, setEditandoId] = useState(null)
+  const [editForm, setEditForm] = useState(null)
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
 
   const cargar = useCallback(() => {
     getMisMetasAhorro(token).then(setMetas).catch((err) => setError(err.message))
@@ -71,6 +75,34 @@ function Ahorros() {
     }
   }
 
+  const empezarEdicion = (m) => {
+    setEditandoId(m.id)
+    setEditForm({ nombre: m.nombre, montoObjetivo: m.montoObjetivo, fechaObjetivo: m.fechaObjetivo || '' })
+  }
+
+  const cancelarEdicion = () => {
+    setEditandoId(null)
+    setEditForm(null)
+  }
+
+  const guardarEdicion = async (id) => {
+    setError(null)
+    setGuardandoEdicion(true)
+    try {
+      await editarMetaAhorro(token, id, {
+        nombre: editForm.nombre,
+        montoObjetivo: Number(editForm.montoObjetivo),
+        fechaObjetivo: editForm.fechaObjetivo || null,
+      })
+      cancelarEdicion()
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGuardandoEdicion(false)
+    }
+  }
+
   return (
     <div>
       <header className="page-header">
@@ -105,46 +137,81 @@ function Ahorros() {
       {metas.length === 0 && !error && <p className="empty-state">Todavía no tienes metas de ahorro.</p>}
 
       <div className="report-list">
-        {metas.map((m) => (
-          <div key={m.id} className="card report-card">
-            <div className="report-card-header">
-              <h2>{m.nombre}</h2>
-              <span className="muted">{m.fechaObjetivo ? `Objetivo: ${m.fechaObjetivo}` : 'Sin fecha límite'}</span>
-            </div>
-
-            <div className="progress-wrap">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${m.porcentajeCompletado}%` }} />
+        {metas.map((m) =>
+          editandoId === m.id ? (
+            <div key={m.id} className="card report-card">
+              <h2>Editando meta</h2>
+              <div className="inline-form" style={{ marginTop: 12 }}>
+                <div className="field field-grow">
+                  <label>Nombre</label>
+                  <input type="text" value={editForm.nombre} onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Objetivo (€)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    value={editForm.montoObjetivo}
+                    onChange={(e) => setEditForm({ ...editForm, montoObjetivo: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label>Fecha objetivo</label>
+                  <input type="date" value={editForm.fechaObjetivo} onChange={(e) => setEditForm({ ...editForm, fechaObjetivo: e.target.value })} />
+                </div>
+                <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(m.id)}>
+                  Guardar
+                </button>
+                <button className="btn-small" onClick={cancelarEdicion}>
+                  Cancelar
+                </button>
               </div>
-              <span className="progress-label">{m.porcentajeCompletado}%</span>
             </div>
-            <p className="muted small" style={{ marginTop: 8 }}>
-              {m.montoActual.toFixed(2)} € de {m.montoObjetivo.toFixed(2)} €
-            </p>
-
-            <div className="inline-form" style={{ marginTop: 16 }}>
-              <div className="field">
-                <label>Cantidad (€)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={aportaciones[m.id] || ''}
-                  onChange={(e) => setAportaciones({ ...aportaciones, [m.id]: e.target.value })}
-                />
+          ) : (
+            <div key={m.id} className="card report-card">
+              <div className="report-card-header">
+                <h2>{m.nombre}</h2>
+                <span className="muted">{m.fechaObjetivo ? `Objetivo: ${m.fechaObjetivo}` : 'Sin fecha límite'}</span>
               </div>
-              <button className="btn-primary" onClick={() => aportar(m.id)}>
-                Aportar
-              </button>
-              <button className="btn-small" onClick={() => retirar(m.id)}>
-                Retirar
-              </button>
-              <button className="btn-small btn-danger" onClick={() => borrar(m.id)}>
-                Eliminar meta
-              </button>
+
+              <div className="progress-wrap">
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${m.porcentajeCompletado}%` }} />
+                </div>
+                <span className="progress-label">{m.porcentajeCompletado}%</span>
+              </div>
+              <p className="muted small" style={{ marginTop: 8 }}>
+                {m.montoActual.toFixed(2)} € de {m.montoObjetivo.toFixed(2)} €
+              </p>
+
+              <div className="inline-form" style={{ marginTop: 16 }}>
+                <div className="field">
+                  <label>Cantidad (€)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={aportaciones[m.id] || ''}
+                    onChange={(e) => setAportaciones({ ...aportaciones, [m.id]: e.target.value })}
+                  />
+                </div>
+                <button className="btn-primary" onClick={() => aportar(m.id)}>
+                  Aportar
+                </button>
+                <button className="btn-small" onClick={() => retirar(m.id)}>
+                  Retirar
+                </button>
+                <button className="btn-small" onClick={() => empezarEdicion(m)}>
+                  Editar
+                </button>
+                <button className="btn-small btn-danger" onClick={() => borrar(m.id)}>
+                  Eliminar meta
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   )

@@ -28,6 +28,13 @@ public class AlertaController {
         return alertaService.resumen(empleado);
     }
 
+    @PutMapping("/{id}")
+    public AlertaDTO actualizar(@AuthenticationPrincipal Empleado empleado,
+                                 @PathVariable Long id,
+                                 @RequestBody @Valid AlertaInputDTO input) {
+        return alertaService.actualizar(empleado, id, input);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@AuthenticationPrincipal Empleado empleado, @PathVariable Long id) {
         alertaService.eliminar(empleado, id);

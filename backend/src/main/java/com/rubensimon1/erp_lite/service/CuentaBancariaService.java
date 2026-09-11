@@ -2,6 +2,8 @@ package com.rubensimon1.erp_lite.service;
 
 import com.rubensimon1.erp_lite.dto.CuentaBancariaDTO;
 import com.rubensimon1.erp_lite.dto.CuentaBancariaInputDTO;
+import com.rubensimon1.erp_lite.dto.ResumenCuentasDTO;
+import com.rubensimon1.erp_lite.entity.CategoriaCuenta;
 import com.rubensimon1.erp_lite.entity.CuentaBancaria;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.repository.CuentaBancariaRepository;
@@ -20,38 +22,65 @@ public class CuentaBancariaService {
     private final CuentaBancariaRepository cuentaBancariaRepository;
 
     public CuentaBancariaDTO anadir(Empleado empleado, CuentaBancariaInputDTO input) {
-        if (input.isPrincipal()) {
-            quitarPrincipalActual(empleado);
-        }
-
         CuentaBancaria cuenta = new CuentaBancaria();
         cuenta.setEmpleado(empleado);
-        cuenta.setAlias(input.getAlias());
-        cuenta.setIban(input.getIban());
-        cuenta.setBanco(input.getBanco());
-        cuenta.setPrincipal(input.isPrincipal());
+        aplicarCambios(cuenta, input);
 
         cuentaBancariaRepository.save(cuenta);
         return toDTO(cuenta);
     }
 
     public List<CuentaBancariaDTO> misCuentas(Empleado empleado) {
-        return cuentaBancariaRepository.findByEmpleadoOrderByPrincipalDescIdAsc(empleado)
+        return cuentaBancariaRepository.findByEmpleadoOrderByIdAsc(empleado)
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    public void eliminar(Empleado empleado, Long id) {
+    public CuentaBancariaDTO actualizar(Empleado empleado, Long id, CuentaBancariaInputDTO input) {
         CuentaBancaria cuenta = obtenerPropia(empleado, id);
-        cuentaBancariaRepository.delete(cuenta);
+        aplicarCambios(cuenta, input);
+
+        cuentaBancariaRepository.save(cuenta);
+        return toDTO(cuenta);
     }
 
-    private void quitarPrincipalActual(Empleado empleado) {
-        cuentaBancariaRepository.findByEmpleadoOrderByPrincipalDescIdAsc(empleado).stream()
-                .filter(CuentaBancaria::isPrincipal)
-                .forEach(c -> {
-                    c.setPrincipal(false);
-                    cuentaBancariaRepository.save(c);
-                });
+    public void eliminar(Empleado empleado, Long id) {
+        cuentaBancariaRepository.delete(obtenerPropia(empleado, id));
+    }
+
+    public ResumenCuentasDTO resumen(Empleado empleado) {
+        List<CuentaBancaria> cuentas = cuentaBancariaRepository.findByEmpleadoOrderByIdAsc(empleado);
+
+        double totalBanco = cuentas.stream()
+                .filter(c -> c.getCategoria() == CategoriaCuenta.BANCO)
+                .mapToDouble(c -> c.getSaldoActual() != null ? c.getSaldoActual() : 0.0)
+                .sum();
+
+        double totalEfectivo = cuentas.stream()
+                .filter(c -> c.getCategoria() == CategoriaCuenta.EFECTIVO)
+                .mapToDouble(c -> c.getSaldoActual() != null ? c.getSaldoActual() : 0.0)
+                .sum();
+
+        return ResumenCuentasDTO.builder()
+                .totalGeneral(redondear(totalBanco + totalEfectivo))
+                .totalBanco(redondear(totalBanco))
+                .totalEfectivo(redondear(totalEfectivo))
+                .cuentas(cuentas.stream().map(this::toDTO).collect(Collectors.toList()))
+                .build();
+    }
+
+    private void aplicarCambios(CuentaBancaria cuenta, CuentaBancariaInputDTO input) {
+        cuenta.setAlias(input.getAlias());
+        cuenta.setCategoria(input.getCategoria());
+        cuenta.setTipoCuenta(input.getTipoCuenta());
+        cuenta.setSaldoActual(input.getSaldoActual() != null ? input.getSaldoActual() : 0.0);
+
+        if (input.getCategoria() == CategoriaCuenta.BANCO) {
+            cuenta.setIban(input.getIban());
+            cuenta.setBanco(input.getBanco());
+        } else {
+            cuenta.setIban(null);
+            cuenta.setBanco(null);
+        }
     }
 
     private CuentaBancaria obtenerPropia(Empleado empleado, Long id) {
@@ -64,13 +93,19 @@ public class CuentaBancariaService {
         return cuenta;
     }
 
+    private double redondear(double valor) {
+        return Math.round(valor * 100.0) / 100.0;
+    }
+
     private CuentaBancariaDTO toDTO(CuentaBancaria c) {
         return CuentaBancariaDTO.builder()
                 .id(c.getId())
                 .alias(c.getAlias())
+                .categoria(c.getCategoria())
+                .tipoCuenta(c.getTipoCuenta())
                 .iban(c.getIban())
                 .banco(c.getBanco())
-                .principal(c.isPrincipal())
+                .saldoActual(c.getSaldoActual())
                 .build();
     }
 }

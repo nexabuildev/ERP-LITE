@@ -12,9 +12,10 @@ const NAV_ITEMS = [
   { to: '/teletrabajo', label: 'Teletrabajo', num: '07' },
   { to: '/movimientos', label: 'Movimientos', num: '08' },
   { to: '/ahorros', label: 'Ahorros', num: '09' },
-  { to: '/cuentas-bancarias', label: 'Cuentas bancarias', num: '10' },
-  { to: '/simulador', label: 'Simulador de sueldo', num: '11' },
-  { to: '/perfil', label: 'Perfil', num: '12' },
+  { to: '/cuentas-bancarias', label: 'Cuentas y efectivo', num: '10' },
+  { to: '/metodos-pago', label: 'Métodos de pago', num: '11' },
+  { to: '/simulador', label: 'Simulador de sueldo', num: '12' },
+  { to: '/perfil', label: 'Perfil', num: '13' },
 ]
 
 function Sidebar({ perfil, onLogout, alertasPendientes = 0 }) {
@@ -46,7 +47,7 @@ function Sidebar({ perfil, onLogout, alertasPendientes = 0 }) {
             to="/admin/vacaciones"
             className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
           >
-            <span className="sidebar-num">13</span>
+            <span className="sidebar-num">14</span>
             Aprobar vacaciones
           </NavLink>
         )}

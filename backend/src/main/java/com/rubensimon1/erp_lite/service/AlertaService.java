@@ -36,15 +36,28 @@ public class AlertaService {
         return toDTO(alerta);
     }
 
+    public AlertaDTO actualizar(Empleado empleado, Long id, AlertaInputDTO input) {
+        Alerta alerta = obtenerPropia(empleado, id);
+        alerta.setTitulo(input.getTitulo());
+        alerta.setFechaVencimiento(input.getFechaVencimiento());
+        alerta.setNotas(input.getNotas());
+
+        alertaRepository.save(alerta);
+        return toDTO(alerta);
+    }
+
     public void eliminar(Empleado empleado, Long id) {
+        alertaRepository.delete(obtenerPropia(empleado, id));
+    }
+
+    private Alerta obtenerPropia(Empleado empleado, Long id) {
         Alerta alerta = alertaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Alerta no encontrada"));
 
         if (!alerta.getEmpleado().getId().equals(empleado.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes eliminar una alerta de otro empleado");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes modificar una alerta de otro empleado");
         }
-
-        alertaRepository.delete(alerta);
+        return alerta;
     }
 
     public ResumenAlertasDTO resumen(Empleado empleado) {

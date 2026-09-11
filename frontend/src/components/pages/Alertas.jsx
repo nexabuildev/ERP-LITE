@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { crearAlerta, eliminarAlerta, getResumenAlertas } from '../../api'
+import { crearAlerta, editarAlerta, eliminarAlerta, getResumenAlertas } from '../../api'
 
 const hoyISO = () => new Date().toISOString().slice(0, 10)
 
@@ -12,6 +12,10 @@ function Alertas() {
   const [notas, setNotas] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const [editandoId, setEditandoId] = useState(null)
+  const [editForm, setEditForm] = useState(null)
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
 
   const cargar = useCallback(() => {
     getResumenAlertas(token).then(setResumen).catch((err) => setError(err.message))
@@ -32,6 +36,30 @@ function Alertas() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const empezarEdicion = (a) => {
+    setEditandoId(a.id)
+    setEditForm({ titulo: a.titulo, fechaVencimiento: a.fechaVencimiento, notas: a.notas || '' })
+  }
+
+  const cancelarEdicion = () => {
+    setEditandoId(null)
+    setEditForm(null)
+  }
+
+  const guardarEdicion = async (id) => {
+    setError(null)
+    setGuardandoEdicion(true)
+    try {
+      await editarAlerta(token, id, editForm)
+      cancelarEdicion()
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGuardandoEdicion(false)
     }
   }
 
@@ -99,27 +127,64 @@ function Alertas() {
 
       {resumen?.alertas?.length > 0 && (
         <div className="report-list">
-          {resumen.alertas.map((a) => (
-            <div key={a.id} className="card report-card">
-              <div className="report-card-header">
-                <h2>{a.titulo}</h2>
-                <span className={`badge badge-${a.estado.toLowerCase() === 'vencida' ? 'rechazada' : a.estado.toLowerCase() === 'proxima' ? 'pendiente' : 'aprobada'}`}>
-                  {a.estado === 'VENCIDA'
-                    ? `Vencida hace ${Math.abs(a.diasRestantes)} días`
-                    : a.estado === 'PROXIMA'
-                      ? `En ${a.diasRestantes} días`
-                      : 'Vigente'}
-                </span>
+          {resumen.alertas.map((a) =>
+            editandoId === a.id ? (
+              <div key={a.id} className="card report-card">
+                <h2>Editando alerta</h2>
+                <div className="inline-form" style={{ marginTop: 12 }}>
+                  <div className="field field-grow">
+                    <label>¿Qué hay que renovar?</label>
+                    <input type="text" value={editForm.titulo} onChange={(e) => setEditForm({ ...editForm, titulo: e.target.value })} />
+                  </div>
+                  <div className="field">
+                    <label>Fecha de vencimiento</label>
+                    <input
+                      type="date"
+                      value={editForm.fechaVencimiento}
+                      onChange={(e) => setEditForm({ ...editForm, fechaVencimiento: e.target.value })}
+                    />
+                  </div>
+                  <div className="field field-grow">
+                    <label>Notas</label>
+                    <input type="text" value={editForm.notas} onChange={(e) => setEditForm({ ...editForm, notas: e.target.value })} />
+                  </div>
+                  <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(a.id)}>
+                    Guardar
+                  </button>
+                  <button className="btn-small" onClick={cancelarEdicion}>
+                    Cancelar
+                  </button>
+                </div>
               </div>
-              <p className="muted">
-                Vence el {a.fechaVencimiento}
-                {a.notas ? ` · ${a.notas}` : ''}
-              </p>
-              <button className="btn-small btn-danger" onClick={() => borrar(a.id)}>
-                Quitar
-              </button>
-            </div>
-          ))}
+            ) : (
+              <div key={a.id} className="card report-card">
+                <div className="report-card-header">
+                  <h2>{a.titulo}</h2>
+                  <span
+                    className={`badge badge-${a.estado.toLowerCase() === 'vencida' ? 'rechazada' : a.estado.toLowerCase() === 'proxima' ? 'pendiente' : 'aprobada'}`}
+                  >
+                    {a.estado === 'VENCIDA'
+                      ? `Vencida hace ${Math.abs(a.diasRestantes)} días`
+                      : a.estado === 'PROXIMA'
+                        ? `En ${a.diasRestantes} días`
+                        : 'Vigente'}
+                  </span>
+                </div>
+                <p className="muted">
+                  Vence el {a.fechaVencimiento}
+                  {a.notas ? ` · ${a.notas}` : ''}
+                </p>
+                <div className="inline-form" style={{ marginTop: 12 }}>
+                  <button className="btn-small" onClick={() => empezarEdicion(a)}>
+                    Editar
+                  </button>
+                  <button className="btn-small btn-danger" onClick={() => borrar(a.id)}>
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            )
+          )}
         </div>
       )}
     </div>

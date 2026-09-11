@@ -31,6 +31,13 @@ public class AhorroController {
         return ahorroService.misMetas(empleado);
     }
 
+    @PutMapping("/{id}")
+    public MetaAhorroDTO actualizar(@AuthenticationPrincipal Empleado empleado,
+                                     @PathVariable Long id,
+                                     @RequestBody @Valid MetaAhorroInputDTO input) {
+        return ahorroService.actualizar(empleado, id, input);
+    }
+
     @PutMapping("/{id}/aportar")
     public MetaAhorroDTO aportar(@AuthenticationPrincipal Empleado empleado,
                                   @PathVariable Long id,

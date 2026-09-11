@@ -34,15 +34,30 @@ public class MovimientoService {
         return toDTO(movimiento);
     }
 
+    public MovimientoDTO actualizar(Empleado empleado, Long id, MovimientoInputDTO input) {
+        Movimiento movimiento = obtenerPropio(empleado, id);
+        movimiento.setConcepto(input.getConcepto());
+        movimiento.setImporte(input.getImporte());
+        movimiento.setTipo(input.getTipo());
+        movimiento.setMedioPago(input.getMedioPago());
+        movimiento.setFecha(input.getFecha());
+
+        movimientoRepository.save(movimiento);
+        return toDTO(movimiento);
+    }
+
     public void eliminar(Empleado empleado, Long id) {
+        movimientoRepository.delete(obtenerPropio(empleado, id));
+    }
+
+    private Movimiento obtenerPropio(Empleado empleado, Long id) {
         Movimiento movimiento = movimientoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movimiento no encontrado"));
 
         if (!movimiento.getEmpleado().getId().equals(empleado.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes eliminar un movimiento de otro empleado");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes modificar un movimiento de otro empleado");
         }
-
-        movimientoRepository.delete(movimiento);
+        return movimiento;
     }
 
     public ResumenMovimientosDTO resumen(Empleado empleado) {

@@ -37,6 +37,16 @@ public class AhorroService {
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
+    public MetaAhorroDTO actualizar(Empleado empleado, Long id, MetaAhorroInputDTO input) {
+        MetaAhorro meta = obtenerPropia(empleado, id);
+        meta.setNombre(input.getNombre());
+        meta.setMontoObjetivo(input.getMontoObjetivo());
+        meta.setFechaObjetivo(input.getFechaObjetivo());
+
+        metaAhorroRepository.save(meta);
+        return toDTO(meta);
+    }
+
     public MetaAhorroDTO aportar(Empleado empleado, Long id, AportacionInputDTO input) {
         MetaAhorro meta = obtenerPropia(empleado, id);
         meta.setMontoActual(meta.getMontoActual() + input.getMonto());

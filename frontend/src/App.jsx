@@ -15,6 +15,7 @@ import AdminVacaciones from './components/pages/AdminVacaciones'
 import Movimientos from './components/pages/Movimientos'
 import Ahorros from './components/pages/Ahorros'
 import CuentasBancarias from './components/pages/CuentasBancarias'
+import MetodosPago from './components/pages/MetodosPago'
 import Simulador from './components/pages/Simulador'
 import './App.css'
 
@@ -50,6 +51,7 @@ function App() {
           <Route path="/movimientos" element={<Movimientos />} />
           <Route path="/ahorros" element={<Ahorros />} />
           <Route path="/cuentas-bancarias" element={<CuentasBancarias />} />
+          <Route path="/metodos-pago" element={<MetodosPago />} />
           <Route path="/simulador" element={<Simulador />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/admin/vacaciones" element={<AdminVacaciones />} />

@@ -703,6 +703,11 @@ tbody tr:hover {
   font-size: 12px;
 }
 
+.mono {
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 0.05em;
+}
+
 /* --- BADGES (sello de estado) --- */
 
 .badge {

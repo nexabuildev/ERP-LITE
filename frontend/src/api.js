@@ -196,6 +196,17 @@ export function getMisCuentasBancarias(token) {
   return request('/api/v1/cuentas-bancarias/mias', token)
 }
 
+export function getResumenCuentas(token) {
+  return request('/api/v1/cuentas-bancarias/resumen', token)
+}
+
+export function editarCuentaBancaria(token, id, data) {
+  return request(`/api/v1/cuentas-bancarias/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
 export function eliminarCuentaBancaria(token, id) {
   return request(`/api/v1/cuentas-bancarias/${id}`, token, { method: 'DELETE' })
 }
@@ -211,6 +222,13 @@ export function crearMetaAhorro(token, data) {
 
 export function getMisMetasAhorro(token) {
   return request('/api/v1/ahorros/mias', token)
+}
+
+export function editarMetaAhorro(token, id, data) {
+  return request(`/api/v1/ahorros/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
 }
 
 export function aportarAhorro(token, id, monto) {
@@ -236,6 +254,13 @@ export function eliminarMetaAhorro(token, id) {
 export function registrarMovimiento(token, data) {
   return request('/api/v1/movimientos', token, {
     method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function editarMovimiento(token, id, data) {
+  return request(`/api/v1/movimientos/${id}`, token, {
+    method: 'PUT',
     body: JSON.stringify(data),
   })
 }
@@ -266,10 +291,45 @@ export function crearAlerta(token, data) {
   })
 }
 
+export function editarAlerta(token, id, data) {
+  return request(`/api/v1/alertas/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
 export function eliminarAlerta(token, id) {
   return request(`/api/v1/alertas/${id}`, token, { method: 'DELETE' })
 }
 
 export function getResumenAlertas(token) {
   return request('/api/v1/alertas/mias/resumen', token)
+}
+
+// --- MÉTODOS DE PAGO (tarjetas / PayPal) ---
+
+export function crearMetodoPago(token, data) {
+  return request('/api/v1/metodos-pago', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getMisMetodosPago(token) {
+  return request('/api/v1/metodos-pago/mios', token)
+}
+
+export function editarMetodoPago(token, id, data) {
+  return request(`/api/v1/metodos-pago/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function eliminarMetodoPago(token, id) {
+  return request(`/api/v1/metodos-pago/${id}`, token, { method: 'DELETE' })
+}
+
+export function getMetodoPagoSensible(token, id) {
+  return request(`/api/v1/metodos-pago/${id}/sensible`, token)
 }
