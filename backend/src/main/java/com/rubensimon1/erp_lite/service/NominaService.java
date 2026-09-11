@@ -13,6 +13,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NominaService {
 
+    // Aproximacion de IRPF + Seguridad Social a cargo del trabajador, usada
+    // tanto para sembrar nominas de ejemplo como para el simulador de sueldo.
+    public static final double TASA_DEDUCCION_APROX = 0.22;
+
     private final NominaRepository nominaRepository;
 
     public List<NominaDTO> misNominas(Empleado empleado) {

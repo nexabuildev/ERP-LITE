@@ -534,6 +534,24 @@ td {
   color: var(--accent);
 }
 
+.badge-bizum {
+  background: var(--ochre-tint);
+  color: var(--ochre);
+}
+
+.badge-normal {
+  background: rgba(20, 17, 15, 0.06);
+  color: var(--ink-soft);
+}
+
+.amount-positive {
+  color: var(--forest);
+}
+
+.amount-negative {
+  color: var(--accent);
+}
+
 /* --- FORMULARIOS --- */
 
 .inline-form {
@@ -563,6 +581,31 @@ td {
 .field-grow {
   flex-grow: 2;
   min-width: 200px;
+}
+
+.field-checkbox {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 11px;
+}
+
+.field-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+.preset-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 /* --- INFORMES (nóminas) --- */
@@ -637,6 +680,53 @@ td {
   font-size: 13px;
 }
 
+/* --- EXTRACTO (movimientos) --- */
+
+.ledger {
+  display: flex;
+  flex-direction: column;
+}
+
+.ledger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(20, 17, 15, 0.15);
+}
+
+.ledger-row:last-child {
+  border-bottom: none;
+}
+
+.ledger-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ledger-concepto {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* --- BARRA DE PROGRESO (ahorros) --- */
+
+.progress-bar {
+  width: 100%;
+  height: 14px;
+  background: rgba(20, 17, 15, 0.08);
+  border: 2px solid var(--line);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
 /* --- RESPONSIVE --- */
 
 @media (max-width: 768px) {
@@ -685,5 +775,9 @@ td {
 
   .auth-card {
     padding: 32px 22px;
+  }
+
+  .ledger-row {
+    flex-wrap: wrap;
   }
 }

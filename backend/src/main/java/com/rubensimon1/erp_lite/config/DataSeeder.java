@@ -7,19 +7,28 @@ import com.rubensimon1.erp_lite.repository.ProductoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.rubensimon1.erp_lite.entity.CuentaBancaria;
 import com.rubensimon1.erp_lite.entity.Departamento;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.entity.EstadoVacacion;
 import com.rubensimon1.erp_lite.entity.Genero;
+import com.rubensimon1.erp_lite.entity.MetaAhorro;
+import com.rubensimon1.erp_lite.entity.Movimiento;
 import com.rubensimon1.erp_lite.entity.Nomina;
 import com.rubensimon1.erp_lite.entity.Producto;
 import com.rubensimon1.erp_lite.entity.Role;
 import com.rubensimon1.erp_lite.entity.SolicitudVacaciones;
+import com.rubensimon1.erp_lite.entity.TipoMovimiento;
+import com.rubensimon1.erp_lite.entity.TipoPago;
 import com.rubensimon1.erp_lite.entity.TipoTrabajador;
+import com.rubensimon1.erp_lite.repository.CuentaBancariaRepository;
 import com.rubensimon1.erp_lite.repository.DepartamentoRepository;
 import com.rubensimon1.erp_lite.repository.EmpleadoRepository;
+import com.rubensimon1.erp_lite.repository.MetaAhorroRepository;
+import com.rubensimon1.erp_lite.repository.MovimientoRepository;
 import com.rubensimon1.erp_lite.repository.NominaRepository;
 import com.rubensimon1.erp_lite.repository.SolicitudVacacionesRepository;
+import com.rubensimon1.erp_lite.service.NominaService;
 
 @Component // 1. Estos le dice a Spring: "Carga esta clase al arrancar"
 public class DataSeeder implements CommandLineRunner {
@@ -31,6 +40,9 @@ public class DataSeeder implements CommandLineRunner {
     private final EmpleadoRepository empleadoRepository;
     private final NominaRepository nominaRepository;
     private final SolicitudVacacionesRepository vacacionesRepository;
+    private final CuentaBancariaRepository cuentaBancariaRepository;
+    private final MetaAhorroRepository metaAhorroRepository;
+    private final MovimientoRepository movimientoRepository;
     private final PasswordEncoder passwordEncoder;
 
     /*
@@ -42,12 +54,18 @@ public class DataSeeder implements CommandLineRunner {
             ProductoRepository productoRepository,
             NominaRepository nominaRepository,
             SolicitudVacacionesRepository vacacionesRepository,
+            CuentaBancariaRepository cuentaBancariaRepository,
+            MetaAhorroRepository metaAhorroRepository,
+            MovimientoRepository movimientoRepository,
             PasswordEncoder passwordEncoder) {
         this.departamentoRepository = departamentoRepository;
         this.empleadoRepository = empleadoRepository;
         this.productoRepository = productoRepository;
         this.nominaRepository = nominaRepository;
         this.vacacionesRepository = vacacionesRepository;
+        this.cuentaBancariaRepository = cuentaBancariaRepository;
+        this.metaAhorroRepository = metaAhorroRepository;
+        this.movimientoRepository = movimientoRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -92,6 +110,8 @@ public class DataSeeder implements CommandLineRunner {
             dev.setGenero(Genero.HOMBRE);
             dev.setCategoriaProfesional("Desarrollador");
             dev.setSalarioBrutoAnual(32000.0);
+            dev.setDni("11223344B");
+            dev.setNumeroSeguridadSocial("281234567890");
 
             Empleado recruiter = new Empleado();
             recruiter.setNombre("Ana Recruiter");
@@ -149,7 +169,7 @@ public class DataSeeder implements CommandLineRunner {
                 for (int i = 1; i <= 3; i++) {
                     LocalDate mesNomina = LocalDate.now().minusMonths(i);
                     double bruto = empleado.getSalarioBrutoAnual() / 12.0;
-                    double deducciones = bruto * 0.22; // aprox. IRPF + Seguridad Social
+                    double deducciones = bruto * NominaService.TASA_DEDUCCION_APROX;
                     double neto = bruto - deducciones;
 
                     Nomina nomina = new Nomina();
@@ -176,6 +196,34 @@ public class DataSeeder implements CommandLineRunner {
             vacaciones.setEstado(EstadoVacacion.APROBADA);
             vacaciones.setFechaSolicitud(LocalDateTime.now().minusMonths(2).minusDays(10));
             vacacionesRepository.save(vacaciones);
+
+            /*
+             * Cuenta bancaria, meta de ahorro y movimientos de ejemplo (zona
+             * financiera personal del empleado).
+             */
+            CuentaBancaria cuenta = new CuentaBancaria();
+            cuenta.setEmpleado(dev);
+            cuenta.setAlias("Cuenta principal");
+            cuenta.setIban("ES91 2100 0418 4502 0005 1332");
+            cuenta.setBanco("Banco Ejemplo");
+            cuenta.setPrincipal(true);
+            cuentaBancariaRepository.save(cuenta);
+
+            MetaAhorro meta = new MetaAhorro();
+            meta.setEmpleado(dev);
+            meta.setNombre("Fondo de emergencia");
+            meta.setMontoObjetivo(3000.0);
+            meta.setMontoActual(950.0);
+            meta.setFechaObjetivo(LocalDate.now().plusMonths(8));
+            metaAhorroRepository.save(meta);
+
+            movimientoRepository.saveAll(List.of(
+                    movimiento(dev, "Nomina mensual", 1600.0, TipoMovimiento.INGRESO, TipoPago.NORMAL, LocalDate.now().minusDays(5)),
+                    movimiento(dev, "Bizum de Marta Dev", 25.0, TipoMovimiento.INGRESO, TipoPago.BIZUM, LocalDate.now().minusDays(4)),
+                    movimiento(dev, "Compra en Mercadona", 63.40, TipoMovimiento.GASTO, TipoPago.NORMAL, LocalDate.now().minusDays(3)),
+                    movimiento(dev, "Factura wifi", 39.90, TipoMovimiento.GASTO, TipoPago.NORMAL, LocalDate.now().minusDays(2)),
+                    movimiento(dev, "Bizum a Carlos Freelance", 15.0, TipoMovimiento.GASTO, TipoPago.BIZUM, LocalDate.now().minusDays(1))
+            ));
 
             /*
              * Crear productos
@@ -211,5 +259,16 @@ public class DataSeeder implements CommandLineRunner {
 
     private double redondear(double valor) {
         return Math.round(valor * 100.0) / 100.0;
+    }
+
+    private Movimiento movimiento(Empleado empleado, String concepto, double importe, TipoMovimiento tipo, TipoPago medioPago, LocalDate fecha) {
+        Movimiento m = new Movimiento();
+        m.setEmpleado(empleado);
+        m.setConcepto(concepto);
+        m.setImporte(importe);
+        m.setTipo(tipo);
+        m.setMedioPago(medioPago);
+        m.setFecha(fecha);
+        return m;
     }
 }

@@ -60,6 +60,9 @@ public class Empleado implements UserDetails {
 
     private Double salarioBrutoAnual;
 
+    private String dni;
+    private String numeroSeguridadSocial;
+
     // --- Campos solo relevantes si tipoTrabajador = AUTONOMO ---
     private String nif;
     private String epigrafeIae;

@@ -20,6 +20,8 @@ public class PerfilService {
 
     public PerfilDTO actualizar(Empleado empleado, PerfilUpdateDTO input) {
         empleado.setNombre(input.getNombre());
+        empleado.setDni(input.getDni());
+        empleado.setNumeroSeguridadSocial(input.getNumeroSeguridadSocial());
         empleado.setTipoTrabajador(input.getTipoTrabajador());
         empleado.setGenero(input.getGenero());
 
@@ -43,6 +45,8 @@ public class PerfilService {
                 .nombre(e.getNombre())
                 .email(e.getEmail())
                 .role(e.getRole())
+                .dni(e.getDni())
+                .numeroSeguridadSocial(e.getNumeroSeguridadSocial())
                 .departamentoNombre(e.getDepartamento() != null ? e.getDepartamento().getNombre() : null)
                 .tipoTrabajador(e.getTipoTrabajador())
                 .genero(e.getGenero())

@@ -8,7 +8,11 @@ const NAV_ITEMS = [
   { to: '/registro-retributivo', label: 'Registro retributivo', num: '04' },
   { to: '/declaraciones', label: 'Declaraciones', num: '05' },
   { to: '/teletrabajo', label: 'Teletrabajo', num: '06' },
-  { to: '/perfil', label: 'Perfil', num: '07' },
+  { to: '/movimientos', label: 'Movimientos', num: '07' },
+  { to: '/ahorros', label: 'Ahorros', num: '08' },
+  { to: '/cuentas-bancarias', label: 'Cuentas bancarias', num: '09' },
+  { to: '/simulador', label: 'Simulador de sueldo', num: '10' },
+  { to: '/perfil', label: 'Perfil', num: '11' },
 ]
 
 function Sidebar({ perfil, onLogout }) {
@@ -37,7 +41,7 @@ function Sidebar({ perfil, onLogout }) {
             to="/admin/vacaciones"
             className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
           >
-            <span className="sidebar-num">08</span>
+            <span className="sidebar-num">12</span>
             Aprobar vacaciones
           </NavLink>
         )}

@@ -11,6 +11,10 @@ import Declaraciones from './components/pages/Declaraciones'
 import Teletrabajo from './components/pages/Teletrabajo'
 import Perfil from './components/pages/Perfil'
 import AdminVacaciones from './components/pages/AdminVacaciones'
+import Movimientos from './components/pages/Movimientos'
+import Ahorros from './components/pages/Ahorros'
+import CuentasBancarias from './components/pages/CuentasBancarias'
+import Simulador from './components/pages/Simulador'
 import './App.css'
 
 function App() {
@@ -41,6 +45,10 @@ function App() {
           <Route path="/registro-retributivo" element={<RegistroRetributivo />} />
           <Route path="/declaraciones" element={<Declaraciones />} />
           <Route path="/teletrabajo" element={<Teletrabajo />} />
+          <Route path="/movimientos" element={<Movimientos />} />
+          <Route path="/ahorros" element={<Ahorros />} />
+          <Route path="/cuentas-bancarias" element={<CuentasBancarias />} />
+          <Route path="/simulador" element={<Simulador />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/admin/vacaciones" element={<AdminVacaciones />} />
           <Route path="*" element={<Navigate to="/" replace />} />

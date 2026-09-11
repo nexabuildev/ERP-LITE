@@ -31,6 +31,8 @@ function Perfil() {
     try {
       const actualizado = await updatePerfil(token, {
         nombre: form.nombre,
+        dni: form.dni,
+        numeroSeguridadSocial: form.numeroSeguridadSocial,
         tipoTrabajador: form.tipoTrabajador,
         genero: form.genero || null,
         nif: form.nif,
@@ -68,6 +70,21 @@ function Perfil() {
           <div className="field">
             <label>Nombre completo</label>
             <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+          </div>
+
+          <div className="field-row">
+            <div className="field">
+              <label>DNI</label>
+              <input value={form.dni || ''} onChange={(e) => setForm({ ...form, dni: e.target.value })} placeholder="12345678A" />
+            </div>
+            <div className="field">
+              <label>Nº Seguridad Social</label>
+              <input
+                value={form.numeroSeguridadSocial || ''}
+                onChange={(e) => setForm({ ...form, numeroSeguridadSocial: e.target.value })}
+                placeholder="281234567890"
+              />
+            </div>
           </div>
 
           <div className="field-row">

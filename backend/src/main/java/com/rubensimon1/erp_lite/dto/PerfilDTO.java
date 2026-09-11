@@ -19,6 +19,8 @@ public class PerfilDTO {
     private String nombre;
     private String email;
     private Role role;
+    private String dni;
+    private String numeroSeguridadSocial;
     private String departamentoNombre;
     private TipoTrabajador tipoTrabajador;
     private Genero genero;

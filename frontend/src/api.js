@@ -127,3 +127,70 @@ export function getRegistroRetributivo(token) {
 export function getMisDeclaraciones(token) {
   return request('/api/v1/declaraciones/mias', token)
 }
+
+// --- CUENTAS BANCARIAS ---
+
+export function anadirCuentaBancaria(token, data) {
+  return request('/api/v1/cuentas-bancarias', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getMisCuentasBancarias(token) {
+  return request('/api/v1/cuentas-bancarias/mias', token)
+}
+
+export function eliminarCuentaBancaria(token, id) {
+  return request(`/api/v1/cuentas-bancarias/${id}`, token, { method: 'DELETE' })
+}
+
+// --- AHORROS ---
+
+export function crearMetaAhorro(token, data) {
+  return request('/api/v1/ahorros', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getMisMetasAhorro(token) {
+  return request('/api/v1/ahorros/mias', token)
+}
+
+export function aportarAhorro(token, id, monto) {
+  return request(`/api/v1/ahorros/${id}/aportar`, token, {
+    method: 'PUT',
+    body: JSON.stringify({ monto }),
+  })
+}
+
+export function eliminarMetaAhorro(token, id) {
+  return request(`/api/v1/ahorros/${id}`, token, { method: 'DELETE' })
+}
+
+// --- MOVIMIENTOS (pagos) ---
+
+export function registrarMovimiento(token, data) {
+  return request('/api/v1/movimientos', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function eliminarMovimiento(token, id) {
+  return request(`/api/v1/movimientos/${id}`, token, { method: 'DELETE' })
+}
+
+export function getResumenMovimientos(token) {
+  return request('/api/v1/movimientos/mios/resumen', token)
+}
+
+// --- SIMULADOR DE NÓMINA ---
+
+export function simularNomina(token, nuevoSalarioBrutoAnual) {
+  return request('/api/v1/simulador/nomina', token, {
+    method: 'POST',
+    body: JSON.stringify({ nuevoSalarioBrutoAnual }),
+  })
+}

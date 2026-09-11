@@ -13,6 +13,9 @@ public class PerfilUpdateDTO {
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
+    private String dni;
+    private String numeroSeguridadSocial;
+
     private TipoTrabajador tipoTrabajador;
     private Genero genero;
 
