@@ -9,6 +9,7 @@ import com.rubensimon1.erp_lite.entity.Role;
 import com.rubensimon1.erp_lite.repository.EmpleadoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,21 +47,44 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         // 1. Spring Security intenta hacer el login (lanza excepción si falla)
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
-        
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } catch (DisabledException e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "CUENTA_DESACTIVADA: tu cuenta está desactivada temporalmente");
+        }
+
         // 2. Si llegamos aquí, usuario y contraseña son correctos. Buscamos al usuario.
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow();
-        
+
         // 3. Generamos el Token
         var jwtToken = jwtService.generateToken(user);
-        
+
         // 4. Devolvemos el Token
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
+    }
+
+    // Reactivar una cuenta desactivada: no pasa por el AuthenticationManager
+    // (rechazaria por isEnabled()=false), verificamos la contraseña a mano.
+    public AuthenticationResponse reactivar(AuthenticationRequest request) {
+        var user = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales incorrectas");
+        }
+
+        user.setActiva(true);
+        repository.save(user);
+
+        var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .build();

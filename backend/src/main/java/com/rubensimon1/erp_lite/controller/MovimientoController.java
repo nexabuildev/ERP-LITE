@@ -1,6 +1,7 @@
 package com.rubensimon1.erp_lite.controller;
 
 import com.rubensimon1.erp_lite.dto.HistorialMovimientosDTO;
+import com.rubensimon1.erp_lite.dto.IncrementoGastoDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoInputDTO;
 import com.rubensimon1.erp_lite.dto.ResumenMovimientosDTO;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/movimientos")
@@ -46,5 +49,10 @@ public class MovimientoController {
     @GetMapping("/mios/historial")
     public HistorialMovimientosDTO historial(@AuthenticationPrincipal Empleado empleado) {
         return movimientoService.historial(empleado);
+    }
+
+    @GetMapping("/mios/incrementos")
+    public List<IncrementoGastoDTO> incrementos(@AuthenticationPrincipal Empleado empleado) {
+        return movimientoService.detectarIncrementos(empleado);
     }
 }

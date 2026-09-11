@@ -421,6 +421,53 @@ h1, h2, h3 {
   color: var(--sidebar-text);
 }
 
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 10px;
+  color: rgba(244, 241, 234, 0.55);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.sidebar-group-toggle:hover {
+  color: var(--sidebar-text);
+}
+
+.sidebar-group-chevron {
+  transition: transform 0.15s ease;
+}
+
+.sidebar-group-chevron.open {
+  transform: rotate(180deg);
+}
+
+.sidebar-group-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 6px;
+  border-left: 2px solid rgba(244, 241, 234, 0.12);
+  margin: 0 0 6px 12px;
+}
+
+.sidebar-group-links.closed {
+  display: none;
+}
+
 .sidebar-badge {
   margin-left: auto;
   background: var(--accent);
@@ -870,6 +917,96 @@ tbody tr:hover {
   font-size: 20px;
 }
 
+/* --- DOCUMENTOS AGRUPADOS POR AÑO (nóminas y declaraciones) --- */
+
+.doc-year-group {
+  margin-bottom: 28px;
+}
+
+.doc-year-group:last-child {
+  margin-bottom: 0;
+}
+
+.doc-year-heading {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 1.2vw + 14px, 26px);
+  font-weight: 600;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.doc-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.doc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 160px;
+}
+
+.doc-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.4142;
+  border: 2px solid var(--line);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.doc-preview-static {
+  cursor: default;
+}
+
+.doc-preview-frame {
+  width: 100%;
+  height: 100%;
+}
+
+.doc-preview-frame img,
+.doc-preview-frame embed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+  display: block;
+  pointer-events: none;
+}
+
+.doc-preview-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-align: center;
+  padding: 8px;
+}
+
+.doc-card-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-card-label strong {
+  font-size: 14px;
+}
+
+.doc-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 /* --- TIMELINE (declaraciones) --- */
 
 .timeline {
@@ -1026,6 +1163,21 @@ tbody tr:hover {
 
   .sidebar-link.active {
     border-bottom-color: var(--accent);
+  }
+
+  /* En horizontal no hay sitio para acordeones: los grupos se aplanan y
+     todos sus enlaces quedan siempre visibles, como el resto de la barra. */
+  .sidebar-group,
+  .sidebar-group-links {
+    display: contents;
+  }
+
+  .sidebar-group-toggle {
+    display: none;
+  }
+
+  .sidebar-group-links.closed {
+    display: contents;
   }
 
   .sidebar-footer {
@@ -1247,6 +1399,80 @@ tbody tr:hover {
 
 .page {
   animation: page-fade-in 0.35s ease both;
+}
+
+/* --- PALETA DE COMANDOS (Cmd/Ctrl+K) --- */
+
+.command-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 15, 0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  z-index: 1000;
+}
+
+.command-palette {
+  width: min(560px, 92vw);
+  background: var(--paper-raised);
+  border: 3px solid var(--line);
+  box-shadow: 8px 8px 0 var(--line);
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh;
+}
+
+.command-input {
+  border: none;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 18px 20px;
+  outline: none;
+}
+
+.command-list {
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.command-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.command-item.active,
+.command-item:hover {
+  background: var(--paper);
+}
+
+.command-item-tipo {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.command-empty {
+  padding: 16px 12px;
+  color: var(--ink-soft);
 }
 
 /* --- ACCESIBILIDAD: respeta "reducir movimiento" del sistema --- */

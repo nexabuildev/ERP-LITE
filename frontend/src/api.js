@@ -43,6 +43,13 @@ export function register(nombre, email, password) {
   })
 }
 
+export function reactivarCuentaLogin(email, password) {
+  return request('/api/v1/auth/reactivar', null, {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+}
+
 // --- PERFIL ---
 
 export function getPerfil(token) {
@@ -61,6 +68,38 @@ export function cambiarCredenciales(token, data) {
     method: 'PUT',
     body: JSON.stringify(data),
   })
+}
+
+export function desactivarCuenta(token, data) {
+  return request('/api/v1/perfil/desactivar', token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function reactivarCuentaPropia(token) {
+  return request('/api/v1/perfil/reactivar', token, { method: 'PUT' })
+}
+
+export function eliminarCuentaDefinitivamente(token, data) {
+  return request('/api/v1/perfil/eliminar', token, {
+    method: 'DELETE',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getExpedienteExportado(token) {
+  return request('/api/v1/perfil/exportar', token)
+}
+
+// --- RESUMEN (wrapped y salud administrativa) ---
+
+export function getWrapped(token) {
+  return request('/api/v1/resumen/wrapped', token)
+}
+
+export function getSaludAdministrativa(token) {
+  return request('/api/v1/resumen/salud', token)
 }
 
 // --- FICHAJES ---
@@ -82,6 +121,13 @@ export function getResumenFichajes(token) {
 export function solicitarVacaciones(token, data) {
   return request('/api/v1/vacaciones', token, {
     method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function editarSolicitudVacaciones(token, id, data) {
+  return request(`/api/v1/vacaciones/${id}`, token, {
+    method: 'PUT',
     body: JSON.stringify(data),
   })
 }
@@ -168,11 +214,20 @@ export function getMisDeclaraciones(token) {
   return request('/api/v1/declaraciones/mias', token)
 }
 
-export function registrarDeclaracionPresentada(token, data) {
+export function registrarDeclaracionPresentada(token, formData) {
   return request('/api/v1/declaraciones/presentadas', token, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: formData,
   })
+}
+
+export async function abrirArchivoDeclaracion(token, id) {
+  const response = await fetch(`${API_URL}/api/v1/declaraciones/presentadas/${id}/archivo`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('No se pudo cargar el archivo')
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
 }
 
 export function getMisDeclaracionesPresentadas(token) {
@@ -275,6 +330,10 @@ export function getResumenMovimientos(token) {
 
 export function getHistorialMovimientos(token) {
   return request('/api/v1/movimientos/mios/historial', token)
+}
+
+export function getIncrementosGastos(token) {
+  return request('/api/v1/movimientos/mios/incrementos', token)
 }
 
 // --- SIMULADOR DE NÓMINA ---

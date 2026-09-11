@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { getPerfil, updatePerfil, cambiarCredenciales } from '../../api'
+import {
+  getPerfil,
+  updatePerfil,
+  cambiarCredenciales,
+  desactivarCuenta,
+  reactivarCuentaPropia,
+  eliminarCuentaDefinitivamente,
+  getExpedienteExportado,
+} from '../../api'
+
+const PALABRA_CONFIRMACION = 'DELETE-CUENTA'
 
 function Perfil() {
   const { token, refreshPerfil } = useOutletContext()
@@ -14,6 +24,13 @@ function Perfil() {
   const [credError, setCredError] = useState(null)
   const [credSuccess, setCredSuccess] = useState(false)
   const [credLoading, setCredLoading] = useState(false)
+
+  const [zonaPeligro, setZonaPeligro] = useState({ confirmacion: '', passwordActual: '' })
+  const [zonaPeligroError, setZonaPeligroError] = useState(null)
+  const [accionEnCurso, setAccionEnCurso] = useState(null) // 'desactivar' | 'eliminar' | 'reactivar' | null
+
+  const [exportando, setExportando] = useState(false)
+  const [exportError, setExportError] = useState(null)
 
   useEffect(() => {
     getPerfil(token)
@@ -100,6 +117,71 @@ function Perfil() {
     }
   }
 
+  const handleDesactivar = async (e) => {
+    e.preventDefault()
+    setZonaPeligroError(null)
+    setAccionEnCurso('desactivar')
+    try {
+      await desactivarCuenta(token, zonaPeligro)
+      setZonaPeligro({ confirmacion: '', passwordActual: '' })
+      refreshPerfil?.()
+      setPerfil((p) => ({ ...p, activa: false }))
+    } catch (err) {
+      setZonaPeligroError(err.message)
+    } finally {
+      setAccionEnCurso(null)
+    }
+  }
+
+  const handleReactivar = async () => {
+    setZonaPeligroError(null)
+    setAccionEnCurso('reactivar')
+    try {
+      await reactivarCuentaPropia(token)
+      refreshPerfil?.()
+      setPerfil((p) => ({ ...p, activa: true }))
+    } catch (err) {
+      setZonaPeligroError(err.message)
+    } finally {
+      setAccionEnCurso(null)
+    }
+  }
+
+  const handleEliminar = async (e) => {
+    e.preventDefault()
+    setZonaPeligroError(null)
+    setAccionEnCurso('eliminar')
+    try {
+      await eliminarCuentaDefinitivamente(token, zonaPeligro)
+      localStorage.removeItem('token')
+      window.location.reload()
+    } catch (err) {
+      setZonaPeligroError(err.message)
+      setAccionEnCurso(null)
+    }
+  }
+
+  const handleExportar = async () => {
+    setExportError(null)
+    setExportando(true)
+    try {
+      const expediente = await getExpedienteExportado(token)
+      const blob = new Blob([JSON.stringify(expediente, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const enlace = document.createElement('a')
+      enlace.href = url
+      enlace.download = `expediente-ziviko-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(enlace)
+      enlace.click()
+      enlace.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setExportError(err.message)
+    } finally {
+      setExportando(false)
+    }
+  }
+
   const esAutonomo = form.tipoTrabajador === 'AUTONOMO'
 
   return (
@@ -112,6 +194,20 @@ function Perfil() {
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
       {success && <div className="alert alert-success">Perfil actualizado correctamente</div>}
+
+      {perfil.activa === false && (
+        <div className="card card-highlight">
+          <div className="card-header">
+            <div>
+              <h2>Tu cuenta está desactivada temporalmente</h2>
+              <p>Nadie más puede iniciar sesión en ella, pero tus datos siguen aquí. Puedes reactivarla cuando quieras.</p>
+            </div>
+            <button className="btn-primary" disabled={accionEnCurso === 'reactivar'} onClick={handleReactivar}>
+              {accionEnCurso === 'reactivar' ? 'Reactivando...' : 'Reactivar cuenta'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="stacked-form">
         <div className="card">
@@ -307,6 +403,70 @@ function Perfil() {
             {credLoading ? 'Guardando...' : 'Actualizar credenciales'}
           </button>
         </form>
+      </div>
+
+      <div className="card" style={{ marginTop: 24 }}>
+        <h2>Descarga tu expediente</h2>
+        <p className="muted small" style={{ marginTop: -8 }}>
+          Un archivo JSON con todos tus datos: perfil, cuentas, movimientos, nóminas, vacaciones, declaraciones y más.
+        </p>
+        {exportError && <div className="alert alert-error">⚠️ {exportError}</div>}
+        <button type="button" className="btn-small" onClick={handleExportar} disabled={exportando}>
+          {exportando ? 'Generando...' : 'Descargar mi expediente (JSON)'}
+        </button>
+      </div>
+
+      <div className="card" style={{ marginTop: 24, borderColor: 'var(--accent)' }}>
+        <h2>Zona peligrosa</h2>
+        <p className="muted small">
+          Escribe exactamente <strong className="mono">{PALABRA_CONFIRMACION}</strong> y tu contraseña para confirmar cualquiera de estas dos acciones.
+        </p>
+
+        {zonaPeligroError && <div className="alert alert-error">⚠️ {zonaPeligroError}</div>}
+
+        <div className="field-row" style={{ marginTop: 12, marginBottom: 20 }}>
+          <div className="field">
+            <label>Escribe "{PALABRA_CONFIRMACION}"</label>
+            <input
+              type="text"
+              value={zonaPeligro.confirmacion}
+              onChange={(e) => setZonaPeligro({ ...zonaPeligro, confirmacion: e.target.value })}
+              placeholder={PALABRA_CONFIRMACION}
+            />
+          </div>
+          <div className="field">
+            <label>Tu contraseña</label>
+            <input
+              type="password"
+              value={zonaPeligro.passwordActual}
+              onChange={(e) => setZonaPeligro({ ...zonaPeligro, passwordActual: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="inline-form">
+          <button
+            type="button"
+            className="btn-small"
+            disabled={accionEnCurso === 'desactivar' || perfil.activa === false}
+            onClick={handleDesactivar}
+          >
+            {accionEnCurso === 'desactivar' ? 'Desactivando...' : 'Eliminar temporalmente (desactivar)'}
+          </button>
+          <button
+            type="button"
+            className="btn-small btn-danger"
+            disabled={accionEnCurso === 'eliminar'}
+            onClick={handleEliminar}
+          >
+            {accionEnCurso === 'eliminar' ? 'Eliminando...' : 'Eliminar definitivamente'}
+          </button>
+        </div>
+        <p className="muted small" style={{ marginTop: 12 }}>
+          <strong>Temporal</strong>: nadie puede iniciar sesión hasta que la reactives (puedes hacerlo volviendo a
+          intentar el login). <strong>Definitiva</strong>: borra tu cuenta y todos tus datos sin posibilidad de
+          recuperarlos.
+        </p>
       </div>
     </div>
   )

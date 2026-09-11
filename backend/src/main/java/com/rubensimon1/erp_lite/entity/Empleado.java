@@ -102,6 +102,10 @@ public class Empleado implements UserDetails {
 
     private String seguroMedico;
 
+    // --- ESTADO DE LA CUENTA ---
+    @Builder.Default
+    private Boolean activa = true; // false = "eliminada temporalmente" (desactivada, se puede reactivar)
+
     // --- MÉTODOS DE USER DETAILS (Contrato de Seguridad) ---
 
     @Override
@@ -145,8 +149,8 @@ public class Empleado implements UserDetails {
     }
 
     @Override
-    public boolean isEnabled() 
+    public boolean isEnabled()
     {
-        return true;
+        return activa == null || activa;
     }
 }

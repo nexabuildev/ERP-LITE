@@ -18,4 +18,7 @@ public class DeclaracionPresentadaDTO {
     private LocalDate fechaPresentacion;
     private Double importe;
     private String notas;
+    private boolean tieneArchivo;
+    private String archivoNombre;
+    private String archivoTipo;
 }

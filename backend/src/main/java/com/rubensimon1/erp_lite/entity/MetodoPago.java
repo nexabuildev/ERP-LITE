@@ -21,6 +21,7 @@ public class MetodoPago {
 
     @ManyToOne
     @JoinColumn(name = "empleado_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Empleado empleado;
 
     @Enumerated(EnumType.STRING)

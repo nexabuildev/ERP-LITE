@@ -49,6 +49,29 @@ public class VacacionesService {
         return toDTO(solicitud);
     }
 
+    public SolicitudVacacionesDTO editar(Empleado empleado, Long id, SolicitudVacacionesInputDTO input) {
+        if (input.getFechaFin().isBefore(input.getFechaInicio())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha de fin no puede ser anterior a la de inicio");
+        }
+
+        SolicitudVacaciones solicitud = vacacionesRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Solicitud no encontrada"));
+
+        if (!solicitud.getEmpleado().getId().equals(empleado.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes modificar una solicitud de otro empleado");
+        }
+        if (solicitud.getEstado() != EstadoVacacion.PENDIENTE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Solo puedes editar una solicitud mientras esté pendiente");
+        }
+
+        solicitud.setFechaInicio(input.getFechaInicio());
+        solicitud.setFechaFin(input.getFechaFin());
+        solicitud.setMotivo(input.getMotivo());
+
+        vacacionesRepository.save(solicitud);
+        return toDTO(solicitud);
+    }
+
     public List<SolicitudVacacionesDTO> misSolicitudes(Empleado empleado) {
         return vacacionesRepository.findByEmpleadoOrderByFechaSolicitudDesc(empleado)
                 .stream().map(this::toDTO).collect(Collectors.toList());

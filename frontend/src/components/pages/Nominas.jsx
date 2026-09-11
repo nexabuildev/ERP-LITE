@@ -1,23 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { getMisNominas, subirNomina, eliminarNomina, abrirArchivoNomina } from '../../api'
+import DocPreview from '../DocPreview'
 
 const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
-const ORDENES = {
-  fecha_desc: { label: 'Más reciente primero', fn: (a, b) => b.anio - a.anio || b.mes - a.mes },
-  fecha_asc: { label: 'Más antigua primero', fn: (a, b) => a.anio - b.anio || a.mes - b.mes },
-  neto_desc: { label: 'Neto: mayor a menor', fn: (a, b) => b.salarioNeto - a.salarioNeto },
-  neto_asc: { label: 'Neto: menor a mayor', fn: (a, b) => a.salarioNeto - b.salarioNeto },
-}
-
 function Nominas() {
   const { token } = useOutletContext()
   const [nominas, setNominas] = useState([])
-  const [orden, setOrden] = useState('fecha_desc')
   const [form, setForm] = useState({ mes: 1, anio: new Date().getFullYear(), salarioBruto: '', deducciones: '', salarioNeto: '', fechaPago: '' })
   const [archivo, setArchivo] = useState(null)
   const [error, setError] = useState(null)
@@ -29,7 +22,19 @@ function Nominas() {
 
   useEffect(cargar, [cargar])
 
-  const nominasOrdenadas = useMemo(() => [...nominas].sort(ORDENES[orden].fn), [nominas, orden])
+  const gruposPorAnio = useMemo(() => {
+    const porAnio = new Map()
+    for (const n of nominas) {
+      if (!porAnio.has(n.anio)) porAnio.set(n.anio, [])
+      porAnio.get(n.anio).push(n)
+    }
+    return [...porAnio.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([anio, items]) => ({
+        anio,
+        items: items.sort((a, b) => b.mes - a.mes),
+      }))
+  }, [nominas])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -80,7 +85,7 @@ function Nominas() {
       <header className="page-header">
         <span className="page-eyebrow">Cobros</span>
         <h1>Nóminas</h1>
-        <p>Sube tus nóminas, guarda el archivo y ordénalas como quieras.</p>
+        <p>Sube tus nóminas, guarda el archivo y consúltalas agrupadas por año.</p>
       </header>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -130,55 +135,37 @@ function Nominas() {
 
       {nominas.length === 0 && !error && <p className="empty-state">Todavía no hay nóminas registradas.</p>}
 
-      {nominas.length > 0 && (
-        <div className="field" style={{ maxWidth: 260, marginBottom: 16 }}>
-          <label>Ordenar por</label>
-          <select value={orden} onChange={(e) => setOrden(e.target.value)}>
-            {Object.entries(ORDENES).map(([key, o]) => (
-              <option key={key} value={key}>
-                {o.label}
-              </option>
+      {gruposPorAnio.map(({ anio, items }) => (
+        <div key={anio} className="doc-year-group">
+          <h2 className="doc-year-heading">Año {anio}</h2>
+          <div className="doc-row">
+            {items.map((n) => (
+              <div key={n.id} className="doc-card">
+                <DocPreview
+                  tieneArchivo={n.tieneArchivo}
+                  archivoTipo={n.archivoTipo}
+                  cargarUrl={() => abrirArchivoNomina(token, n.id)}
+                  onAbrir={() => verArchivo(n.id)}
+                />
+                <div className="doc-card-label">
+                  <strong>{MESES[n.mes - 1]}</strong>
+                  <span className="muted small">Neto {n.salarioNeto.toFixed(2)} €</span>
+                </div>
+                <div className="doc-card-actions">
+                  {n.tieneArchivo && (
+                    <button type="button" className="btn-small" onClick={() => verArchivo(n.id)}>
+                      Ver
+                    </button>
+                  )}
+                  <button type="button" className="btn-small btn-danger" onClick={() => borrar(n.id)}>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
             ))}
-          </select>
-        </div>
-      )}
-
-      <div className="report-list">
-        {nominasOrdenadas.map((n) => (
-          <div key={n.id} className="card report-card">
-            <div className="report-card-header">
-              <h2>
-                {MESES[n.mes - 1]} {n.anio}
-              </h2>
-              <span className="muted">Pagada el {n.fechaPago}</span>
-            </div>
-            <div className="report-grid">
-              <div>
-                <span className="muted">Bruto</span>
-                <strong>{n.salarioBruto.toFixed(2)} €</strong>
-              </div>
-              <div>
-                <span className="muted">Deducciones</span>
-                <strong>-{n.deducciones.toFixed(2)} €</strong>
-              </div>
-              <div>
-                <span className="muted">Neto</span>
-                <strong className="accent">{n.salarioNeto.toFixed(2)} €</strong>
-              </div>
-            </div>
-            <div className="inline-form" style={{ marginTop: 16 }}>
-              {n.tieneArchivo && (
-                <button type="button" className="btn-small" onClick={() => verArchivo(n.id)}>
-                  📎 Ver {n.archivoNombre}
-                </button>
-              )}
-              <button type="button" className="btn-small btn-danger" onClick={() => borrar(n.id)}>
-                Eliminar
-              </button>
-            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { login, register } from '../api'
+import { login, register, reactivarCuentaLogin } from '../api'
 import ThemeToggle from './ThemeToggle'
 
 function AuthPage({ onAuthSuccess }) {
@@ -9,17 +9,21 @@ function AuthPage({ onAuthSuccess }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [cuentaDesactivada, setCuentaDesactivada] = useState(false)
+  const [reactivando, setReactivando] = useState(false)
 
   const isLogin = mode === 'login'
 
   const switchMode = () => {
     setError(null)
+    setCuentaDesactivada(false)
     setMode(isLogin ? 'register' : 'login')
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
+    setCuentaDesactivada(false)
     setLoading(true)
     try {
       const data = isLogin
@@ -27,9 +31,27 @@ function AuthPage({ onAuthSuccess }) {
         : await register(nombre, email, password)
       onAuthSuccess(data.token)
     } catch (err) {
-      setError(err.message)
+      if (err.message.includes('CUENTA_DESACTIVADA')) {
+        setCuentaDesactivada(true)
+        setError('Tu cuenta está desactivada temporalmente.')
+      } else {
+        setError(err.message)
+      }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleReactivar = async () => {
+    setError(null)
+    setReactivando(true)
+    try {
+      const data = await reactivarCuentaLogin(email, password)
+      onAuthSuccess(data.token)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setReactivando(false)
     }
   }
 
@@ -84,6 +106,12 @@ function AuthPage({ onAuthSuccess }) {
         </form>
 
         {error && <div className="alert alert-error">⚠️ {error}</div>}
+
+        {cuentaDesactivada && (
+          <button type="button" className="btn-primary btn-block" style={{ marginTop: 12 }} onClick={handleReactivar} disabled={reactivando}>
+            {reactivando ? 'Reactivando...' : 'Reactivar mi cuenta'}
+          </button>
+        )}
 
         <p className="auth-switch">
           {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}

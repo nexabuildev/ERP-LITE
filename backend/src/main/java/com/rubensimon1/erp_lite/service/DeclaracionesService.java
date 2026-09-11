@@ -10,8 +10,10 @@ import com.rubensimon1.erp_lite.repository.DeclaracionPresentadaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -45,7 +47,7 @@ public class DeclaracionesService {
         return declaraciones;
     }
 
-    public DeclaracionPresentadaDTO registrarPresentada(Empleado empleado, DeclaracionPresentadaInputDTO input) {
+    public DeclaracionPresentadaDTO registrarPresentada(Empleado empleado, DeclaracionPresentadaInputDTO input, MultipartFile archivo) {
         DeclaracionPresentada d = new DeclaracionPresentada();
         d.setEmpleado(empleado);
         d.setModelo(input.getModelo());
@@ -54,8 +56,31 @@ public class DeclaracionesService {
         d.setImporte(input.getImporte());
         d.setNotas(input.getNotas());
 
+        if (archivo != null && !archivo.isEmpty()) {
+            try {
+                d.setArchivoNombre(archivo.getOriginalFilename());
+                d.setArchivoTipo(archivo.getContentType());
+                d.setArchivoContenido(archivo.getBytes());
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se pudo leer el archivo adjunto");
+            }
+        }
+
         declaracionPresentadaRepository.save(d);
         return toPresentadaDTO(d);
+    }
+
+    public DeclaracionPresentada obtenerArchivo(Empleado empleado, Long id) {
+        DeclaracionPresentada d = declaracionPresentadaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Declaracion no encontrada"));
+
+        if (!d.getEmpleado().getId().equals(empleado.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes acceder a una declaracion de otro empleado");
+        }
+        if (d.getArchivoContenido() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Esta declaracion no tiene archivo adjunto");
+        }
+        return d;
     }
 
     public List<DeclaracionPresentadaDTO> misPresentadas(Empleado empleado) {
@@ -82,6 +107,9 @@ public class DeclaracionesService {
                 .fechaPresentacion(d.getFechaPresentacion())
                 .importe(d.getImporte())
                 .notas(d.getNotas())
+                .tieneArchivo(d.getArchivoContenido() != null)
+                .archivoNombre(d.getArchivoNombre())
+                .archivoTipo(d.getArchivoTipo())
                 .build();
     }
 

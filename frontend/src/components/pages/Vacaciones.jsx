@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { solicitarVacaciones, getMisVacaciones, getSaldoVacaciones, ajustarVacaciones, getDesgloseVacaciones } from '../../api'
+import {
+  solicitarVacaciones,
+  getMisVacaciones,
+  getSaldoVacaciones,
+  ajustarVacaciones,
+  getDesgloseVacaciones,
+  editarSolicitudVacaciones,
+} from '../../api'
 
 function Vacaciones() {
   const { token } = useOutletContext()
@@ -15,6 +22,13 @@ function Vacaciones() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [ajustando, setAjustando] = useState(false)
+
+  const [editandoId, setEditandoId] = useState(null)
+  const [editFechaInicio, setEditFechaInicio] = useState('')
+  const [editFechaFin, setEditFechaFin] = useState('')
+  const [editMotivo, setEditMotivo] = useState('')
+  const [editError, setEditError] = useState(null)
+  const [editLoading, setEditLoading] = useState(false)
 
   const cargar = useCallback(() => {
     Promise.all([getSaldoVacaciones(token), getMisVacaciones(token), getDesgloseVacaciones(token)])
@@ -42,6 +56,37 @@ function Vacaciones() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const empezarEdicion = (s) => {
+    setEditandoId(s.id)
+    setEditFechaInicio(s.fechaInicio)
+    setEditFechaFin(s.fechaFin)
+    setEditMotivo(s.motivo || '')
+    setEditError(null)
+  }
+
+  const cancelarEdicion = () => {
+    setEditandoId(null)
+    setEditError(null)
+  }
+
+  const guardarEdicion = async (id) => {
+    setEditError(null)
+    setEditLoading(true)
+    try {
+      await editarSolicitudVacaciones(token, id, {
+        fechaInicio: editFechaInicio,
+        fechaFin: editFechaFin,
+        motivo: editMotivo,
+      })
+      setEditandoId(null)
+      cargar()
+    } catch (err) {
+      setEditError(err.message)
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -143,6 +188,7 @@ function Vacaciones() {
       {solicitudes.length > 0 && (
         <div className="card">
           <h2>Solicitudes</h2>
+          {editError && <div className="alert alert-error">⚠️ {editError}</div>}
           <div className="table-wrapper">
             <table>
               <thead>
@@ -151,19 +197,57 @@ function Vacaciones() {
                   <th>Hasta</th>
                   <th>Motivo</th>
                   <th>Estado</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {solicitudes.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.fechaInicio}</td>
-                    <td>{s.fechaFin}</td>
-                    <td className="muted">{s.motivo || '—'}</td>
-                    <td>
-                      <span className={`badge badge-${s.estado.toLowerCase()}`}>{s.estado}</span>
-                    </td>
-                  </tr>
-                ))}
+                {solicitudes.map((s) =>
+                  editandoId === s.id ? (
+                    <tr key={s.id}>
+                      <td>
+                        <input type="date" value={editFechaInicio} onChange={(e) => setEditFechaInicio(e.target.value)} />
+                      </td>
+                      <td>
+                        <input type="date" value={editFechaFin} onChange={(e) => setEditFechaFin(e.target.value)} />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          value={editMotivo}
+                          onChange={(e) => setEditMotivo(e.target.value)}
+                          placeholder="Motivo (opcional)"
+                        />
+                      </td>
+                      <td>
+                        <span className={`badge badge-${s.estado.toLowerCase()}`}>{s.estado}</span>
+                      </td>
+                      <td style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn-small" onClick={() => guardarEdicion(s.id)} disabled={editLoading}>
+                          {editLoading ? 'Guardando...' : 'Guardar'}
+                        </button>
+                        <button className="btn-small" onClick={cancelarEdicion} disabled={editLoading}>
+                          Cancelar
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={s.id}>
+                      <td>{s.fechaInicio}</td>
+                      <td>{s.fechaFin}</td>
+                      <td className="muted">{s.motivo || '—'}</td>
+                      <td>
+                        <span className={`badge badge-${s.estado.toLowerCase()}`}>{s.estado}</span>
+                      </td>
+                      <td>
+                        {s.estado === 'PENDIENTE' && (
+                          <button className="btn-small" onClick={() => empezarEdicion(s)}>
+                            Editar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>

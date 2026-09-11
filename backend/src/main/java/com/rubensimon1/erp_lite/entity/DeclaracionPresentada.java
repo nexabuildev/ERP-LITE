@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "declaraciones_presentadas")
@@ -20,6 +22,7 @@ public class DeclaracionPresentada {
 
     @ManyToOne
     @JoinColumn(name = "empleado_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Empleado empleado;
 
     @Column(nullable = false)
@@ -34,4 +37,9 @@ public class DeclaracionPresentada {
     private Double importe; // resultado a pagar/devolver, opcional
 
     private String notas;
+
+    // --- Archivo adjunto (PDF/imagen de la declaracion real), opcional ---
+    private String archivoNombre;
+    private String archivoTipo;
+    private byte[] archivoContenido;
 }

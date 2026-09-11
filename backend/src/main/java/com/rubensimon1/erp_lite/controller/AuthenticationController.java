@@ -32,4 +32,11 @@ public class AuthenticationController {
     ) {
         return ResponseEntity.ok(service.register(request));
     }
+
+    @PostMapping("/reactivar")
+    public ResponseEntity<AuthenticationResponse> reactivar(
+            @RequestBody AuthenticationRequest request
+    ) {
+        return ResponseEntity.ok(service.reactivar(request));
+    }
 }

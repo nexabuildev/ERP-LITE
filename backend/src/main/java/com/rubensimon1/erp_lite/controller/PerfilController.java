@@ -2,18 +2,18 @@ package com.rubensimon1.erp_lite.controller;
 
 import com.rubensimon1.erp_lite.dto.CambiarCredencialesDTO;
 import com.rubensimon1.erp_lite.dto.CredencialesActualizadasDTO;
+import com.rubensimon1.erp_lite.dto.EliminarCuentaInputDTO;
+import com.rubensimon1.erp_lite.dto.ExpedienteExportDTO;
 import com.rubensimon1.erp_lite.dto.PerfilDTO;
 import com.rubensimon1.erp_lite.dto.PerfilUpdateDTO;
 import com.rubensimon1.erp_lite.entity.Empleado;
+import com.rubensimon1.erp_lite.service.ExportService;
 import com.rubensimon1.erp_lite.service.PerfilService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/perfil")
@@ -21,6 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class PerfilController {
 
     private final PerfilService perfilService;
+    private final ExportService exportService;
+
+    @GetMapping("/exportar")
+    public ExpedienteExportDTO exportar(@AuthenticationPrincipal Empleado empleado) {
+        return exportService.exportar(empleado);
+    }
 
     @GetMapping("/mio")
     public PerfilDTO miPerfil(@AuthenticationPrincipal Empleado empleado) {
@@ -37,5 +43,23 @@ public class PerfilController {
     public CredencialesActualizadasDTO cambiarCredenciales(@AuthenticationPrincipal Empleado empleado,
                                                              @RequestBody @Valid CambiarCredencialesDTO input) {
         return perfilService.cambiarCredenciales(empleado, input);
+    }
+
+    @PutMapping("/desactivar")
+    public PerfilDTO desactivar(@AuthenticationPrincipal Empleado empleado,
+                                 @RequestBody @Valid EliminarCuentaInputDTO input) {
+        return perfilService.desactivar(empleado, input);
+    }
+
+    @PutMapping("/reactivar")
+    public PerfilDTO reactivar(@AuthenticationPrincipal Empleado empleado) {
+        return perfilService.reactivarPropia(empleado);
+    }
+
+    @DeleteMapping("/eliminar")
+    public ResponseEntity<Void> eliminar(@AuthenticationPrincipal Empleado empleado,
+                                          @RequestBody @Valid EliminarCuentaInputDTO input) {
+        perfilService.eliminarDefinitivamente(empleado, input);
+        return ResponseEntity.noContent().build();
     }
 }

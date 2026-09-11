@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import CommandPalette from '../CommandPalette'
 import { getPerfil, getResumenAlertas } from '../../api'
 
 function Layout({ token, onLogout }) {
@@ -34,6 +35,7 @@ function Layout({ token, onLogout }) {
           <Outlet context={{ token, perfil, refreshPerfil: cargarPerfil }} />
         </div>
       </main>
+      <CommandPalette onLogout={onLogout} />
     </div>
   )
 }

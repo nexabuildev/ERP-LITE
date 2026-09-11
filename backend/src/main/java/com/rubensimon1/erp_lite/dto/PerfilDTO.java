@@ -47,4 +47,5 @@ public class PerfilDTO {
     private String contactoEmergenciaNombre;
     private String contactoEmergenciaTelefono;
     private String seguroMedico;
+    private Boolean activa;
 }

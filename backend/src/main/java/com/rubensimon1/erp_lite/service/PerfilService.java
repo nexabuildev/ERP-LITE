@@ -3,6 +3,7 @@ package com.rubensimon1.erp_lite.service;
 import com.rubensimon1.erp_lite.config.JwtService;
 import com.rubensimon1.erp_lite.dto.CambiarCredencialesDTO;
 import com.rubensimon1.erp_lite.dto.CredencialesActualizadasDTO;
+import com.rubensimon1.erp_lite.dto.EliminarCuentaInputDTO;
 import com.rubensimon1.erp_lite.dto.PerfilDTO;
 import com.rubensimon1.erp_lite.dto.PerfilUpdateDTO;
 import com.rubensimon1.erp_lite.entity.Empleado;
@@ -96,6 +97,35 @@ public class PerfilService {
                 .build();
     }
 
+    private static final String PALABRA_CONFIRMACION = "DELETE-CUENTA";
+
+    public PerfilDTO desactivar(Empleado empleado, EliminarCuentaInputDTO input) {
+        validarConfirmacion(empleado, input);
+        empleado.setActiva(false);
+        empleadoRepository.save(empleado);
+        return toDTO(empleado);
+    }
+
+    public PerfilDTO reactivarPropia(Empleado empleado) {
+        empleado.setActiva(true);
+        empleadoRepository.save(empleado);
+        return toDTO(empleado);
+    }
+
+    public void eliminarDefinitivamente(Empleado empleado, EliminarCuentaInputDTO input) {
+        validarConfirmacion(empleado, input);
+        empleadoRepository.delete(empleado);
+    }
+
+    private void validarConfirmacion(Empleado empleado, EliminarCuentaInputDTO input) {
+        if (!PALABRA_CONFIRMACION.equals(input.getConfirmacion())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escribe exactamente \"" + PALABRA_CONFIRMACION + "\" para confirmar");
+        }
+        if (!passwordEncoder.matches(input.getPasswordActual(), empleado.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "La contraseña actual no es correcta");
+        }
+    }
+
     private PerfilDTO toDTO(Empleado e) {
         return PerfilDTO.builder()
                 .id(e.getId())
@@ -127,6 +157,7 @@ public class PerfilService {
                 .contactoEmergenciaNombre(e.getContactoEmergenciaNombre())
                 .contactoEmergenciaTelefono(e.getContactoEmergenciaTelefono())
                 .seguroMedico(e.getSeguroMedico())
+                .activa(e.getActiva() == null || e.getActiva())
                 .build();
     }
 }
