@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import ThemeToggle from '../ThemeToggle'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Resumen', num: '00', end: true },
@@ -49,6 +50,7 @@ function Sidebar({ perfil, onLogout }) {
 
       <div className="sidebar-footer">
         {perfil && <p className="sidebar-user">{perfil.nombre}</p>}
+        <ThemeToggle />
         <button className="btn-outline btn-block" onClick={onLogout}>
           Cerrar sesión
         </button>

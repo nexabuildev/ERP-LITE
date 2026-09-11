@@ -2,7 +2,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #f4f1ea;
+  background-color: var(--paper, #f4f1ea);
   width: 100vw;
   min-height: 100vh;
   overflow-x: hidden; /* Evita scroll horizontal */

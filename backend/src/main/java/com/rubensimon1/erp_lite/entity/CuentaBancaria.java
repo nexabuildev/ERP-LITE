@@ -1,5 +1,6 @@
 package com.rubensimon1.erp_lite.entity;
 
+import com.rubensimon1.erp_lite.config.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ public class CuentaBancaria {
     private String alias;
 
     @Column(nullable = false)
+    @Convert(converter = CryptoConverter.class)
     private String iban;
 
     private String banco;

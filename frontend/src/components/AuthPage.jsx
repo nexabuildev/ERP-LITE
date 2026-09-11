@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { login, register } from '../api'
+import ThemeToggle from './ThemeToggle'
 
 function AuthPage({ onAuthSuccess }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
@@ -34,6 +35,7 @@ function AuthPage({ onAuthSuccess }) {
 
   return (
     <div className="auth-screen">
+      <ThemeToggle className="auth-theme-toggle" />
       <div className="auth-card">
         <div className="auth-brand">
           <h1>LEGAJO</h1>

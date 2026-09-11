@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.rubensimon1.erp_lite.config.CryptoConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -60,11 +61,16 @@ public class Empleado implements UserDetails {
 
     private Double salarioBrutoAnual;
 
+    @Convert(converter = CryptoConverter.class)
     private String dni;
+
+    @Convert(converter = CryptoConverter.class)
     private String numeroSeguridadSocial;
 
     // --- Campos solo relevantes si tipoTrabajador = AUTONOMO ---
+    @Convert(converter = CryptoConverter.class)
     private String nif;
+
     private String epigrafeIae;
     private java.time.LocalDate fechaAltaAutonomo;
 

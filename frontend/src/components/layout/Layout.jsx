@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import { getPerfil } from '../../api'
 
 function Layout({ token, onLogout }) {
   const [perfil, setPerfil] = useState(null)
   const [error, setError] = useState(null)
+  const location = useLocation()
 
   const cargarPerfil = useCallback(() => {
     return getPerfil(token)
@@ -22,7 +23,9 @@ function Layout({ token, onLogout }) {
       <Sidebar perfil={perfil} onLogout={onLogout} />
       <main className="portal-content">
         {error && <div className="alert alert-error">⚠️ {error}</div>}
-        <Outlet context={{ token, perfil, refreshPerfil: cargarPerfil }} />
+        <div className="page" key={location.pathname}>
+          <Outlet context={{ token, perfil, refreshPerfil: cargarPerfil }} />
+        </div>
       </main>
     </div>
   )
