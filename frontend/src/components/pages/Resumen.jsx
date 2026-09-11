@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
-import { getResumenFichajes, getSaldoVacaciones, getMisDeclaraciones, getMisRegistrosTeletrabajo } from '../../api'
+import {
+  getResumenFichajes,
+  getSaldoVacaciones,
+  getMisDeclaraciones,
+  getMisRegistrosTeletrabajo,
+  getResumenAlertas,
+} from '../../api'
 
 function Resumen() {
   const { token, perfil } = useOutletContext()
@@ -13,9 +19,10 @@ function Resumen() {
       getSaldoVacaciones(token),
       getMisDeclaraciones(token),
       getMisRegistrosTeletrabajo(token),
+      getResumenAlertas(token),
     ])
-      .then(([fichajes, saldo, declaraciones, teletrabajo]) => {
-        setData({ fichajes, saldo, proximaDeclaracion: declaraciones[0], teletrabajo: teletrabajo[0] })
+      .then(([fichajes, saldo, declaraciones, teletrabajo, alertas]) => {
+        setData({ fichajes, saldo, proximaDeclaracion: declaraciones[0], teletrabajo: teletrabajo[0], alertas })
       })
       .catch((err) => setError(err.message))
   }, [token])
@@ -25,13 +32,23 @@ function Resumen() {
       <header className="page-header">
         <span className="page-eyebrow">Expediente Nº {perfil?.id ?? '—'}</span>
         <h1>Hola, {perfil?.nombre?.split(' ')[0] ?? ''}</h1>
-        <p>Este es el estado de tu situación laboral hoy.</p>
+        <p>Tu expediente personal: laboral, financiero y lo que no puedes dejar caducar.</p>
       </header>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
 
       {data && (
         <div className="stats-grid">
+          <Link to="/alertas" className="stat-block">
+            <span className="stat-block-label">Alertas activas</span>
+            <span className={`stat-block-value ${data.alertas.vencidas > 0 ? 'amount-negative' : ''}`}>
+              {data.alertas.vencidas + data.alertas.proximas}
+            </span>
+            <span className="stat-block-hint">
+              {data.alertas.vencidas > 0 ? `${data.alertas.vencidas} vencidas` : 'Al día'}
+            </span>
+          </Link>
+
           <Link to="/fichajes" className="stat-block">
             <span className="stat-block-label">Horas este mes</span>
             <span className="stat-block-value">{data.fichajes.horasMesActual}h</span>

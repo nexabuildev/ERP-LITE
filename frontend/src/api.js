@@ -194,3 +194,20 @@ export function simularNomina(token, nuevoSalarioBrutoAnual) {
     body: JSON.stringify({ nuevoSalarioBrutoAnual }),
   })
 }
+
+// --- ALERTAS (renovaciones y caducidades) ---
+
+export function crearAlerta(token, data) {
+  return request('/api/v1/alertas', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function eliminarAlerta(token, id) {
+  return request(`/api/v1/alertas/${id}`, token, { method: 'DELETE' })
+}
+
+export function getResumenAlertas(token) {
+  return request('/api/v1/alertas/mias/resumen', token)
+}

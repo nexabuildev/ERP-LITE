@@ -3,25 +3,26 @@ import ThemeToggle from '../ThemeToggle'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Resumen', num: '00', end: true },
-  { to: '/fichajes', label: 'Fichajes', num: '01' },
-  { to: '/vacaciones', label: 'Vacaciones', num: '02' },
-  { to: '/nominas', label: 'Nóminas', num: '03' },
-  { to: '/registro-retributivo', label: 'Registro retributivo', num: '04' },
-  { to: '/declaraciones', label: 'Declaraciones', num: '05' },
-  { to: '/teletrabajo', label: 'Teletrabajo', num: '06' },
-  { to: '/movimientos', label: 'Movimientos', num: '07' },
-  { to: '/ahorros', label: 'Ahorros', num: '08' },
-  { to: '/cuentas-bancarias', label: 'Cuentas bancarias', num: '09' },
-  { to: '/simulador', label: 'Simulador de sueldo', num: '10' },
-  { to: '/perfil', label: 'Perfil', num: '11' },
+  { to: '/alertas', label: 'Alertas', num: '01' },
+  { to: '/fichajes', label: 'Fichajes', num: '02' },
+  { to: '/vacaciones', label: 'Vacaciones', num: '03' },
+  { to: '/nominas', label: 'Nóminas', num: '04' },
+  { to: '/registro-retributivo', label: 'Registro retributivo', num: '05' },
+  { to: '/declaraciones', label: 'Declaraciones', num: '06' },
+  { to: '/teletrabajo', label: 'Teletrabajo', num: '07' },
+  { to: '/movimientos', label: 'Movimientos', num: '08' },
+  { to: '/ahorros', label: 'Ahorros', num: '09' },
+  { to: '/cuentas-bancarias', label: 'Cuentas bancarias', num: '10' },
+  { to: '/simulador', label: 'Simulador de sueldo', num: '11' },
+  { to: '/perfil', label: 'Perfil', num: '12' },
 ]
 
-function Sidebar({ perfil, onLogout }) {
+function Sidebar({ perfil, onLogout, alertasPendientes = 0 }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
         <span className="sidebar-mark">LEGAJO</span>
-        <span className="sidebar-sub">Portal del empleado</span>
+        <span className="sidebar-sub">Portal del ciudadano</span>
       </div>
 
       <nav className="sidebar-nav">
@@ -34,6 +35,9 @@ function Sidebar({ perfil, onLogout }) {
           >
             <span className="sidebar-num">{item.num}</span>
             {item.label}
+            {item.to === '/alertas' && alertasPendientes > 0 && (
+              <span className="sidebar-badge">{alertasPendientes}</span>
+            )}
           </NavLink>
         ))}
 
@@ -42,7 +46,7 @@ function Sidebar({ perfil, onLogout }) {
             to="/admin/vacaciones"
             className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
           >
-            <span className="sidebar-num">12</span>
+            <span className="sidebar-num">13</span>
             Aprobar vacaciones
           </NavLink>
         )}

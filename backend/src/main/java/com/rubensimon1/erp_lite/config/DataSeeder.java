@@ -7,6 +7,7 @@ import com.rubensimon1.erp_lite.repository.ProductoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.rubensimon1.erp_lite.entity.Alerta;
 import com.rubensimon1.erp_lite.entity.CuentaBancaria;
 import com.rubensimon1.erp_lite.entity.Departamento;
 import com.rubensimon1.erp_lite.entity.Empleado;
@@ -21,6 +22,7 @@ import com.rubensimon1.erp_lite.entity.SolicitudVacaciones;
 import com.rubensimon1.erp_lite.entity.TipoMovimiento;
 import com.rubensimon1.erp_lite.entity.TipoPago;
 import com.rubensimon1.erp_lite.entity.TipoTrabajador;
+import com.rubensimon1.erp_lite.repository.AlertaRepository;
 import com.rubensimon1.erp_lite.repository.CuentaBancariaRepository;
 import com.rubensimon1.erp_lite.repository.DepartamentoRepository;
 import com.rubensimon1.erp_lite.repository.EmpleadoRepository;
@@ -43,6 +45,7 @@ public class DataSeeder implements CommandLineRunner {
     private final CuentaBancariaRepository cuentaBancariaRepository;
     private final MetaAhorroRepository metaAhorroRepository;
     private final MovimientoRepository movimientoRepository;
+    private final AlertaRepository alertaRepository;
     private final PasswordEncoder passwordEncoder;
 
     /*
@@ -57,6 +60,7 @@ public class DataSeeder implements CommandLineRunner {
             CuentaBancariaRepository cuentaBancariaRepository,
             MetaAhorroRepository metaAhorroRepository,
             MovimientoRepository movimientoRepository,
+            AlertaRepository alertaRepository,
             PasswordEncoder passwordEncoder) {
         this.departamentoRepository = departamentoRepository;
         this.empleadoRepository = empleadoRepository;
@@ -66,6 +70,7 @@ public class DataSeeder implements CommandLineRunner {
         this.cuentaBancariaRepository = cuentaBancariaRepository;
         this.metaAhorroRepository = metaAhorroRepository;
         this.movimientoRepository = movimientoRepository;
+        this.alertaRepository = alertaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -226,6 +231,16 @@ public class DataSeeder implements CommandLineRunner {
             ));
 
             /*
+             * Alertas de renovaciones/caducidades, el diferencial de "portal
+             * del ciudadano": cosas que caducan y hay que recordar renovar.
+             */
+            alertaRepository.saveAll(List.of(
+                    alerta(dev, "Renovar DNI", LocalDate.now().plusDays(20), "Cita previa en la comisaria"),
+                    alerta(dev, "Renovar carnet de conducir", LocalDate.now().plusMonths(6), null),
+                    alerta(dev, "ITV del coche", LocalDate.now().minusDays(3), "Ya vencida, pedir cita")
+            ));
+
+            /*
              * Crear productos
              */
             Producto portatil = new Producto();
@@ -270,5 +285,14 @@ public class DataSeeder implements CommandLineRunner {
         m.setMedioPago(medioPago);
         m.setFecha(fecha);
         return m;
+    }
+
+    private Alerta alerta(Empleado empleado, String titulo, LocalDate fechaVencimiento, String notas) {
+        Alerta a = new Alerta();
+        a.setEmpleado(empleado);
+        a.setTitulo(titulo);
+        a.setFechaVencimiento(fechaVencimiento);
+        a.setNotas(notas);
+        return a;
     }
 }

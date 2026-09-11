@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AuthPage from './components/AuthPage'
 import Layout from './components/layout/Layout'
 import Resumen from './components/pages/Resumen'
+import Alertas from './components/pages/Alertas'
 import Fichajes from './components/pages/Fichajes'
 import Vacaciones from './components/pages/Vacaciones'
 import Nominas from './components/pages/Nominas'
@@ -39,6 +40,7 @@ function App() {
       <Routes>
         <Route element={<Layout token={token} onLogout={handleLogout} />}>
           <Route path="/" element={<Resumen />} />
+          <Route path="/alertas" element={<Alertas />} />
           <Route path="/fichajes" element={<Fichajes />} />
           <Route path="/vacaciones" element={<Vacaciones />} />
           <Route path="/nominas" element={<Nominas />} />

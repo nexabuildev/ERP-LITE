@@ -39,7 +39,7 @@ function AuthPage({ onAuthSuccess }) {
       <div className="auth-card">
         <div className="auth-brand">
           <h1>LEGAJO</h1>
-          <p>{isLogin ? 'Portal del empleado — inicia sesión' : 'Crea tu cuenta de empleado'}</p>
+          <p>{isLogin ? 'Portal del ciudadano — inicia sesión' : 'Crea tu cuenta y empieza tu expediente'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
