@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 
@@ -43,9 +45,11 @@ public class Movimiento {
     // con cuenta vinculada, el saldo que se actualiza es el de esa cuenta.
     @ManyToOne
     @JoinColumn(name = "cuenta_bancaria_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private CuentaBancaria cuentaBancaria;
 
     @ManyToOne
     @JoinColumn(name = "metodo_pago_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private MetodoPago metodoPago;
 }

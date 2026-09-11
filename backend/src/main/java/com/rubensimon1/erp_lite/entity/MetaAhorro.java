@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 
@@ -36,5 +38,6 @@ public class MetaAhorro {
     // Cuenta (o efectivo) de la que sale/entra el dinero al aportar/retirar
     @ManyToOne
     @JoinColumn(name = "cuenta_origen_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private CuentaBancaria cuentaOrigen;
 }

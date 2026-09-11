@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "metodos_pago")
@@ -46,5 +48,6 @@ public class MetodoPago {
     // Cuenta bancaria a la que pertenece la tarjeta (opcional)
     @ManyToOne
     @JoinColumn(name = "cuenta_vinculada_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private CuentaBancaria cuentaVinculada;
 }

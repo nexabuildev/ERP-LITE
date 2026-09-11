@@ -11,6 +11,8 @@ import {
 
 const VACIO = { tipo: 'TARJETA', alias: '', titular: '', numero: '', fechaCaducidad: '', cvv: '', emailPaypal: '', cuentaVinculadaId: '' }
 
+const ETIQUETA_TIPO = { TARJETA: 'Tarjeta', PAYPAL: 'PayPal', EFECTIVO: 'Efectivo' }
+
 function MetodosPago() {
   const { token } = useOutletContext()
   const [metodos, setMetodos] = useState([])
@@ -109,14 +111,26 @@ function MetodosPago() {
     }
   }
 
-  const esTarjeta = form.tipo === 'TARJETA'
+  const cuentaSelect = (value, onChange, label = 'Cuenta / billetera vinculada') => (
+    <div className="field field-grow">
+      <label>{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Sin vincular</option>
+        {cuentas.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.alias}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
 
   return (
     <div>
       <header className="page-header">
         <span className="page-eyebrow">Cartera</span>
         <h1>Métodos de pago</h1>
-        <p>Guarda tarjetas o cuentas de PayPal. El número completo y el CVV están tapados hasta que pulsas el ojo.</p>
+        <p>Tarjetas, PayPal o efectivo. El número completo y el CVV están tapados hasta que pulsas el ojo.</p>
       </header>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -129,14 +143,21 @@ function MetodosPago() {
             <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>
               <option value="TARJETA">Tarjeta</option>
               <option value="PAYPAL">PayPal</option>
+              <option value="EFECTIVO">Efectivo / billetera</option>
             </select>
           </div>
           <div className="field field-grow">
             <label>Alias</label>
-            <input type="text" value={form.alias} onChange={(e) => setForm({ ...form, alias: e.target.value })} placeholder="Visa personal" required />
+            <input
+              type="text"
+              value={form.alias}
+              onChange={(e) => setForm({ ...form, alias: e.target.value })}
+              placeholder={form.tipo === 'EFECTIVO' ? 'Mi billetera' : 'Visa personal'}
+              required
+            />
           </div>
 
-          {esTarjeta ? (
+          {form.tipo === 'TARJETA' && (
             <>
               <div className="field field-grow">
                 <label>Titular</label>
@@ -161,24 +182,19 @@ function MetodosPago() {
                 <label>CVV</label>
                 <input type="password" inputMode="numeric" maxLength={4} value={form.cvv} onChange={(e) => setForm({ ...form, cvv: e.target.value })} required />
               </div>
-              <div className="field field-grow">
-                <label>Cuenta bancaria vinculada (opcional)</label>
-                <select value={form.cuentaVinculadaId} onChange={(e) => setForm({ ...form, cuentaVinculadaId: e.target.value })}>
-                  <option value="">Sin vincular</option>
-                  {cuentas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.alias}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {cuentaSelect(form.cuentaVinculadaId, (v) => setForm({ ...form, cuentaVinculadaId: v }), 'Cuenta bancaria vinculada (opcional)')}
             </>
-          ) : (
+          )}
+
+          {form.tipo === 'PAYPAL' && (
             <div className="field field-grow">
               <label>Email de PayPal</label>
               <input type="email" value={form.emailPaypal} onChange={(e) => setForm({ ...form, emailPaypal: e.target.value })} required />
             </div>
           )}
+
+          {form.tipo === 'EFECTIVO' &&
+            cuentaSelect(form.cuentaVinculadaId, (v) => setForm({ ...form, cuentaVinculadaId: v }), '¿A qué billetera de efectivo apunta? (opcional)')}
 
           <button className="btn-primary" disabled={loading}>
             {loading ? 'Guardando...' : 'Añadir'}
@@ -198,7 +214,8 @@ function MetodosPago() {
                   <label>Alias</label>
                   <input type="text" value={editForm.alias} onChange={(e) => setEditForm({ ...editForm, alias: e.target.value })} />
                 </div>
-                {editForm.tipo === 'TARJETA' ? (
+
+                {editForm.tipo === 'TARJETA' && (
                   <>
                     <div className="field field-grow">
                       <label>Titular</label>
@@ -221,19 +238,11 @@ function MetodosPago() {
                       <label>CVV nuevo (opcional)</label>
                       <input type="password" maxLength={4} value={editForm.cvv} onChange={(e) => setEditForm({ ...editForm, cvv: e.target.value })} />
                     </div>
-                    <div className="field field-grow">
-                      <label>Cuenta bancaria vinculada</label>
-                      <select value={editForm.cuentaVinculadaId} onChange={(e) => setEditForm({ ...editForm, cuentaVinculadaId: e.target.value })}>
-                        <option value="">Sin vincular</option>
-                        {cuentas.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.alias}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {cuentaSelect(editForm.cuentaVinculadaId, (v) => setEditForm({ ...editForm, cuentaVinculadaId: v }), 'Cuenta bancaria vinculada')}
                   </>
-                ) : (
+                )}
+
+                {editForm.tipo === 'PAYPAL' && (
                   <div className="field field-grow">
                     <label>Email nuevo (opcional)</label>
                     <input
@@ -244,6 +253,10 @@ function MetodosPago() {
                     />
                   </div>
                 )}
+
+                {editForm.tipo === 'EFECTIVO' &&
+                  cuentaSelect(editForm.cuentaVinculadaId, (v) => setEditForm({ ...editForm, cuentaVinculadaId: v }), 'Billetera vinculada')}
+
                 <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(m.id)}>
                   Guardar
                 </button>
@@ -256,10 +269,12 @@ function MetodosPago() {
             <div key={m.id} className="card report-card">
               <div className="report-card-header">
                 <h2>{m.alias}</h2>
-                <span className={`badge ${m.tipo === 'TARJETA' ? 'badge-normal' : 'badge-bizum'}`}>{m.tipo}</span>
+                <span className={`badge ${m.tipo === 'TARJETA' ? 'badge-normal' : m.tipo === 'PAYPAL' ? 'badge-bizum' : 'badge-aprobada'}`}>
+                  {ETIQUETA_TIPO[m.tipo]}
+                </span>
               </div>
 
-              {m.tipo === 'TARJETA' ? (
+              {m.tipo === 'TARJETA' && (
                 <div className="report-grid">
                   <div>
                     <span className="muted">Titular</span>
@@ -267,9 +282,7 @@ function MetodosPago() {
                   </div>
                   <div>
                     <span className="muted">Número</span>
-                    <strong className="mono">
-                      {revelados[m.id] ? revelados[m.id].numero : m.numeroEnmascarado}
-                    </strong>
+                    <strong className="mono">{revelados[m.id] ? revelados[m.id].numero : m.numeroEnmascarado}</strong>
                   </div>
                   <div>
                     <span className="muted">Caducidad</span>
@@ -284,7 +297,9 @@ function MetodosPago() {
                     <strong>{m.cuentaVinculadaAlias || '—'}</strong>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {m.tipo === 'PAYPAL' && (
                 <div className="report-grid">
                   <div>
                     <span className="muted">Email PayPal</span>
@@ -293,10 +308,21 @@ function MetodosPago() {
                 </div>
               )}
 
+              {m.tipo === 'EFECTIVO' && (
+                <div className="report-grid">
+                  <div>
+                    <span className="muted">Billetera vinculada</span>
+                    <strong>{m.cuentaVinculadaAlias || '—'}</strong>
+                  </div>
+                </div>
+              )}
+
               <div className="inline-form" style={{ marginTop: 16 }}>
-                <button className="btn-small" disabled={cargandoRevelado === m.id} onClick={() => toggleRevelar(m.id)}>
-                  {revelados[m.id] ? '🙈 Ocultar' : '👁️ Ver datos completos'}
-                </button>
+                {m.tipo !== 'EFECTIVO' && (
+                  <button className="btn-small" disabled={cargandoRevelado === m.id} onClick={() => toggleRevelar(m.id)}>
+                    {revelados[m.id] ? '🙈 Ocultar' : '👁️ Ver datos completos'}
+                  </button>
+                )}
                 <button className="btn-small" onClick={() => empezarEdicion(m)}>
                   Editar
                 </button>
