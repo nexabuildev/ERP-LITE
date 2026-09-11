@@ -2,7 +2,9 @@ package com.rubensimon1.erp_lite.controller;
 
 import com.rubensimon1.erp_lite.dto.AuthenticationRequest;
 import com.rubensimon1.erp_lite.dto.AuthenticationResponse;
+import com.rubensimon1.erp_lite.dto.RegisterRequest;
 import com.rubensimon1.erp_lite.service.AuthenticationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,5 +24,12 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request
     ) {
         return ResponseEntity.ok(service.authenticate(request));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthenticationResponse> register(
+            @RequestBody @Valid RegisterRequest request
+    ) {
+        return ResponseEntity.ok(service.register(request));
     }
 }
