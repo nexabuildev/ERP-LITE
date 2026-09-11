@@ -32,4 +32,9 @@ public class MetaAhorro {
     private Double montoActual;
 
     private LocalDate fechaObjetivo;
+
+    // Cuenta (o efectivo) de la que sale/entra el dinero al aportar/retirar
+    @ManyToOne
+    @JoinColumn(name = "cuenta_origen_id")
+    private CuentaBancaria cuentaOrigen;
 }

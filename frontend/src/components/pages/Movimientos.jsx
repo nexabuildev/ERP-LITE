@@ -1,17 +1,72 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { registrarMovimiento, editarMovimiento, eliminarMovimiento, getResumenMovimientos } from '../../api'
+import {
+  registrarMovimiento,
+  editarMovimiento,
+  eliminarMovimiento,
+  getResumenMovimientos,
+  getMisCuentasBancarias,
+  getMisMetodosPago,
+} from '../../api'
 
 const hoyISO = () => new Date().toISOString().slice(0, 10)
+
+// El origen se guarda como "cuenta:<id>" o "metodo:<id>" en un único <select>
+function origenAValor(cuentaBancariaId, metodoPagoId) {
+  if (metodoPagoId) return `metodo:${metodoPagoId}`
+  if (cuentaBancariaId) return `cuenta:${cuentaBancariaId}`
+  return ''
+}
+
+function valorAOrigen(valor) {
+  if (!valor) return { cuentaBancariaId: null, metodoPagoId: null }
+  const [tipo, id] = valor.split(':')
+  return {
+    cuentaBancariaId: tipo === 'cuenta' ? Number(id) : null,
+    metodoPagoId: tipo === 'metodo' ? Number(id) : null,
+  }
+}
+
+function SelectorOrigen({ value, onChange, cuentas, metodos }) {
+  return (
+    <div className="field field-grow">
+      <label>¿De dónde sale/entra el dinero? (opcional)</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Sin vincular</option>
+        {cuentas.length > 0 && (
+          <optgroup label="Cuentas y efectivo">
+            {cuentas.map((c) => (
+              <option key={`cuenta:${c.id}`} value={`cuenta:${c.id}`}>
+                {c.alias}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {metodos.length > 0 && (
+          <optgroup label="Tarjetas / PayPal">
+            {metodos.map((m) => (
+              <option key={`metodo:${m.id}`} value={`metodo:${m.id}`}>
+                {m.alias}
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+    </div>
+  )
+}
 
 function Movimientos() {
   const { token } = useOutletContext()
   const [resumen, setResumen] = useState(null)
+  const [cuentas, setCuentas] = useState([])
+  const [metodos, setMetodos] = useState([])
   const [concepto, setConcepto] = useState('')
   const [importe, setImporte] = useState('')
   const [tipo, setTipo] = useState('GASTO')
   const [medioPago, setMedioPago] = useState('NORMAL')
   const [fecha, setFecha] = useState(hoyISO())
+  const [origen, setOrigen] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -21,6 +76,8 @@ function Movimientos() {
 
   const cargar = useCallback(() => {
     getResumenMovimientos(token).then(setResumen).catch((err) => setError(err.message))
+    getMisCuentasBancarias(token).then(setCuentas).catch(() => {})
+    getMisMetodosPago(token).then(setMetodos).catch(() => {})
   }, [token])
 
   useEffect(cargar, [cargar])
@@ -30,9 +87,10 @@ function Movimientos() {
     setError(null)
     setLoading(true)
     try {
-      await registrarMovimiento(token, { concepto, importe: Number(importe), tipo, medioPago, fecha })
+      await registrarMovimiento(token, { concepto, importe: Number(importe), tipo, medioPago, fecha, ...valorAOrigen(origen) })
       setConcepto('')
       setImporte('')
+      setOrigen('')
       cargar()
     } catch (err) {
       setError(err.message)
@@ -43,7 +101,14 @@ function Movimientos() {
 
   const empezarEdicion = (m) => {
     setEditandoId(m.id)
-    setEditForm({ concepto: m.concepto, importe: m.importe, tipo: m.tipo, medioPago: m.medioPago, fecha: m.fecha })
+    setEditForm({
+      concepto: m.concepto,
+      importe: m.importe,
+      tipo: m.tipo,
+      medioPago: m.medioPago,
+      fecha: m.fecha,
+      origen: origenAValor(m.cuentaBancariaId, m.metodoPagoId),
+    })
   }
 
   const cancelarEdicion = () => {
@@ -55,7 +120,8 @@ function Movimientos() {
     setError(null)
     setGuardandoEdicion(true)
     try {
-      await editarMovimiento(token, id, { ...editForm, importe: Number(editForm.importe) })
+      const { origen: origenForm, ...resto } = editForm
+      await editarMovimiento(token, id, { ...resto, importe: Number(editForm.importe), ...valorAOrigen(origenForm) })
       cancelarEdicion()
       cargar()
     } catch (err) {
@@ -80,7 +146,7 @@ function Movimientos() {
       <header className="page-header">
         <span className="page-eyebrow">Cuenta personal</span>
         <h1>Movimientos</h1>
-        <p>Tu saldo real: ingresos, Bizums y gastos, todo en un mismo extracto.</p>
+        <p>Tu saldo real: ingresos, Bizums y gastos, todo en un mismo extracto. Vincula un movimiento a una cuenta o tarjeta y su saldo se actualiza solo.</p>
       </header>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -137,6 +203,7 @@ function Movimientos() {
             <label>Fecha</label>
             <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required />
           </div>
+          <SelectorOrigen value={origen} onChange={setOrigen} cuentas={cuentas} metodos={metodos} />
           <button className="btn-primary" disabled={loading}>
             {loading ? 'Guardando...' : 'Añadir'}
           </button>
@@ -177,6 +244,12 @@ function Movimientos() {
                       <label>Fecha</label>
                       <input type="date" value={editForm.fecha} onChange={(e) => setEditForm({ ...editForm, fecha: e.target.value })} />
                     </div>
+                    <SelectorOrigen
+                      value={editForm.origen}
+                      onChange={(v) => setEditForm({ ...editForm, origen: v })}
+                      cuentas={cuentas}
+                      metodos={metodos}
+                    />
                     <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(m.id)}>
                       Guardar
                     </button>
@@ -191,6 +264,7 @@ function Movimientos() {
                     <span className="ledger-concepto">{m.concepto}</span>
                     <span className="muted small">
                       {m.fecha} · <span className={`badge badge-${m.medioPago.toLowerCase()}`}>{m.medioPago}</span>
+                      {(m.cuentaBancariaAlias || m.metodoPagoAlias) && ` · ${m.cuentaBancariaAlias || m.metodoPagoAlias}`}
                     </span>
                   </div>
                   <span className={m.tipo === 'INGRESO' ? 'amount-positive bold' : 'amount-negative bold'}>

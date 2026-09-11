@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'legajo-theme'
+const STORAGE_KEY = 'ziviko-theme'
 
 export function getStoredTheme() {
   try {

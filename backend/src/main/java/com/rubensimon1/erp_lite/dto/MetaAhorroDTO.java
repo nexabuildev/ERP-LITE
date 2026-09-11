@@ -18,4 +18,6 @@ public class MetaAhorroDTO {
     private Double montoActual;
     private LocalDate fechaObjetivo;
     private double porcentajeCompletado;
+    private Long cuentaOrigenId;
+    private String cuentaOrigenAlias;
 }

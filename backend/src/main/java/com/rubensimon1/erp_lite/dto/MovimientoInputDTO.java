@@ -27,4 +27,9 @@ public class MovimientoInputDTO {
 
     @NotNull
     private LocalDate fecha;
+
+    // Opcionales: de donde sale/entra el dinero. Si se indica metodoPagoId y
+    // ese metodo tiene cuenta vinculada, esa es la cuenta que se actualiza.
+    private Long cuentaBancariaId;
+    private Long metodoPagoId;
 }

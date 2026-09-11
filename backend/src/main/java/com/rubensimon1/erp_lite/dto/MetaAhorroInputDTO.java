@@ -18,4 +18,7 @@ public class MetaAhorroInputDTO {
     private Double montoObjetivo;
 
     private LocalDate fechaObjetivo;
+
+    // Cuenta (o efectivo) de la que sale/entra el dinero al aportar/retirar (opcional)
+    private Long cuentaOrigenId;
 }

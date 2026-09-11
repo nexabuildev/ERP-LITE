@@ -38,7 +38,7 @@ function AuthPage({ onAuthSuccess }) {
       <ThemeToggle className="auth-theme-toggle" />
       <div className="auth-card">
         <div className="auth-brand">
-          <h1>LEGAJO</h1>
+          <h1>ZIVIKO</h1>
           <p>{isLogin ? 'Portal del ciudadano — inicia sesión' : 'Crea tu cuenta y empieza tu expediente'}</p>
         </div>
 

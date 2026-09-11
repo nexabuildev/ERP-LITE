@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { crearMetaAhorro, getMisMetasAhorro, editarMetaAhorro, aportarAhorro, retirarAhorro, eliminarMetaAhorro } from '../../api'
+import { crearMetaAhorro, getMisMetasAhorro, editarMetaAhorro, aportarAhorro, retirarAhorro, eliminarMetaAhorro, getMisCuentasBancarias } from '../../api'
 
 function Ahorros() {
   const { token } = useOutletContext()
   const [metas, setMetas] = useState([])
+  const [cuentas, setCuentas] = useState([])
   const [nombre, setNombre] = useState('')
   const [montoObjetivo, setMontoObjetivo] = useState('')
   const [fechaObjetivo, setFechaObjetivo] = useState('')
+  const [cuentaOrigenId, setCuentaOrigenId] = useState('')
   const [aportaciones, setAportaciones] = useState({})
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -18,6 +20,7 @@ function Ahorros() {
 
   const cargar = useCallback(() => {
     getMisMetasAhorro(token).then(setMetas).catch((err) => setError(err.message))
+    getMisCuentasBancarias(token).then(setCuentas).catch(() => {})
   }, [token])
 
   useEffect(cargar, [cargar])
@@ -27,10 +30,16 @@ function Ahorros() {
     setError(null)
     setLoading(true)
     try {
-      await crearMetaAhorro(token, { nombre, montoObjetivo: Number(montoObjetivo), fechaObjetivo: fechaObjetivo || null })
+      await crearMetaAhorro(token, {
+        nombre,
+        montoObjetivo: Number(montoObjetivo),
+        fechaObjetivo: fechaObjetivo || null,
+        cuentaOrigenId: cuentaOrigenId || null,
+      })
       setNombre('')
       setMontoObjetivo('')
       setFechaObjetivo('')
+      setCuentaOrigenId('')
       cargar()
     } catch (err) {
       setError(err.message)
@@ -77,7 +86,12 @@ function Ahorros() {
 
   const empezarEdicion = (m) => {
     setEditandoId(m.id)
-    setEditForm({ nombre: m.nombre, montoObjetivo: m.montoObjetivo, fechaObjetivo: m.fechaObjetivo || '' })
+    setEditForm({
+      nombre: m.nombre,
+      montoObjetivo: m.montoObjetivo,
+      fechaObjetivo: m.fechaObjetivo || '',
+      cuentaOrigenId: m.cuentaOrigenId || '',
+    })
   }
 
   const cancelarEdicion = () => {
@@ -93,6 +107,7 @@ function Ahorros() {
         nombre: editForm.nombre,
         montoObjetivo: Number(editForm.montoObjetivo),
         fechaObjetivo: editForm.fechaObjetivo || null,
+        cuentaOrigenId: editForm.cuentaOrigenId || null,
       })
       cancelarEdicion()
       cargar()
@@ -128,6 +143,17 @@ function Ahorros() {
             <label>Fecha objetivo (opcional)</label>
             <input type="date" value={fechaObjetivo} onChange={(e) => setFechaObjetivo(e.target.value)} />
           </div>
+          <div className="field field-grow">
+            <label>¿De qué cuenta sale el dinero? (opcional)</label>
+            <select value={cuentaOrigenId} onChange={(e) => setCuentaOrigenId(e.target.value)}>
+              <option value="">Sin vincular</option>
+              {cuentas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.alias}
+                </option>
+              ))}
+            </select>
+          </div>
           <button className="btn-primary" disabled={loading}>
             {loading ? 'Creando...' : 'Crear meta'}
           </button>
@@ -160,6 +186,17 @@ function Ahorros() {
                   <label>Fecha objetivo</label>
                   <input type="date" value={editForm.fechaObjetivo} onChange={(e) => setEditForm({ ...editForm, fechaObjetivo: e.target.value })} />
                 </div>
+                <div className="field field-grow">
+                  <label>Cuenta de origen</label>
+                  <select value={editForm.cuentaOrigenId} onChange={(e) => setEditForm({ ...editForm, cuentaOrigenId: e.target.value })}>
+                    <option value="">Sin vincular</option>
+                    {cuentas.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.alias}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(m.id)}>
                   Guardar
                 </button>
@@ -183,6 +220,7 @@ function Ahorros() {
               </div>
               <p className="muted small" style={{ marginTop: 8 }}>
                 {m.montoActual.toFixed(2)} € de {m.montoObjetivo.toFixed(2)} €
+                {m.cuentaOrigenAlias && ` · sale de ${m.cuentaOrigenAlias}`}
               </p>
 
               <div className="inline-form" style={{ marginTop: 16 }}>

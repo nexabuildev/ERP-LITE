@@ -38,4 +38,14 @@ public class Movimiento {
 
     @Column(nullable = false)
     private LocalDate fecha;
+
+    // De donde sale/entra el dinero (opcional). Si se indica un metodo de pago
+    // con cuenta vinculada, el saldo que se actualiza es el de esa cuenta.
+    @ManyToOne
+    @JoinColumn(name = "cuenta_bancaria_id")
+    private CuentaBancaria cuentaBancaria;
+
+    @ManyToOne
+    @JoinColumn(name = "metodo_pago_id")
+    private MetodoPago metodoPago;
 }

@@ -22,7 +22,7 @@ function Sidebar({ perfil, onLogout, alertasPendientes = 0 }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="sidebar-mark">LEGAJO</span>
+        <span className="sidebar-mark">ZIVIKO</span>
         <span className="sidebar-sub">Portal del ciudadano</span>
       </div>
 

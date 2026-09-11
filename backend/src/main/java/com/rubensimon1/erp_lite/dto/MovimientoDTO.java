@@ -20,4 +20,8 @@ public class MovimientoDTO {
     private TipoMovimiento tipo;
     private TipoPago medioPago;
     private LocalDate fecha;
+    private Long cuentaBancariaId;
+    private String cuentaBancariaAlias;
+    private Long metodoPagoId;
+    private String metodoPagoAlias;
 }
