@@ -1,22 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { solicitarVacaciones, getMisVacaciones, getSaldoVacaciones } from '../../api'
+import { solicitarVacaciones, getMisVacaciones, getSaldoVacaciones, ajustarVacaciones, getDesgloseVacaciones } from '../../api'
 
 function Vacaciones() {
   const { token } = useOutletContext()
   const [saldo, setSaldo] = useState(null)
   const [solicitudes, setSolicitudes] = useState([])
+  const [desglose, setDesglose] = useState([])
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
   const [motivo, setMotivo] = useState('')
+  const [ajusteDias, setAjusteDias] = useState('')
+  const [ajusteConcepto, setAjusteConcepto] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [ajustando, setAjustando] = useState(false)
 
   const cargar = useCallback(() => {
-    Promise.all([getSaldoVacaciones(token), getMisVacaciones(token)])
-      .then(([s, v]) => {
+    Promise.all([getSaldoVacaciones(token), getMisVacaciones(token), getDesgloseVacaciones(token)])
+      .then(([s, v, d]) => {
         setSaldo(s)
         setSolicitudes(v)
+        setDesglose(d)
       })
       .catch((err) => setError(err.message))
   }, [token])
@@ -40,12 +45,28 @@ function Vacaciones() {
     }
   }
 
+  const handleAjuste = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setAjustando(true)
+    try {
+      await ajustarVacaciones(token, { dias: Number(ajusteDias), concepto: ajusteConcepto })
+      setAjusteDias('')
+      setAjusteConcepto('')
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setAjustando(false)
+    }
+  }
+
   return (
     <div>
       <header className="page-header">
         <span className="page-eyebrow">Ausencias</span>
         <h1>Vacaciones</h1>
-        <p>Solicita tus días libres y consulta tu saldo anual.</p>
+        <p>Solicita tus días libres, ajusta tu saldo a mano y consulta el desglose.</p>
       </header>
 
       {error && <div className="alert alert-error">⚠️ {error}</div>}
@@ -93,9 +114,35 @@ function Vacaciones() {
         </form>
       </div>
 
+      <div className="card">
+        <h2>Ajustar saldo a mano</h2>
+        <p className="muted small" style={{ marginTop: -8 }}>
+          Suma días extra (ej: convenio, compensación) o resta (ej: permiso sin sueldo).
+        </p>
+        <form onSubmit={handleAjuste} className="inline-form">
+          <div className="field">
+            <label>Días (+/-)</label>
+            <input type="number" value={ajusteDias} onChange={(e) => setAjusteDias(e.target.value)} placeholder="Ej: 2 o -1" required />
+          </div>
+          <div className="field field-grow">
+            <label>Concepto</label>
+            <input
+              type="text"
+              value={ajusteConcepto}
+              onChange={(e) => setAjusteConcepto(e.target.value)}
+              placeholder="Ej: día por convenio"
+              required
+            />
+          </div>
+          <button className="btn-primary" disabled={ajustando}>
+            {ajustando ? 'Guardando...' : 'Ajustar'}
+          </button>
+        </form>
+      </div>
+
       {solicitudes.length > 0 && (
         <div className="card">
-          <h2>Historial</h2>
+          <h2>Solicitudes</h2>
           <div className="table-wrapper">
             <table>
               <thead>
@@ -119,6 +166,28 @@ function Vacaciones() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {desglose.length > 0 && (
+        <div className="card">
+          <h2>Desglose del saldo</h2>
+          <div className="ledger">
+            {desglose.map((d, i) => (
+              <div key={i} className="ledger-row">
+                <div className="ledger-info">
+                  <span className="ledger-concepto">{d.concepto}</span>
+                  <span className="muted small">
+                    {d.fecha} · <span className="badge badge-normal">{d.tipo}</span>
+                  </span>
+                </div>
+                <span className={d.dias >= 0 ? 'amount-positive bold' : 'amount-negative bold'}>
+                  {d.dias >= 0 ? '+' : ''}
+                  {d.dias} días
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

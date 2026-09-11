@@ -44,6 +44,13 @@ public class AhorroService {
         return toDTO(meta);
     }
 
+    public MetaAhorroDTO retirar(Empleado empleado, Long id, AportacionInputDTO input) {
+        MetaAhorro meta = obtenerPropia(empleado, id);
+        meta.setMontoActual(Math.max(0.0, meta.getMontoActual() - input.getMonto()));
+        metaAhorroRepository.save(meta);
+        return toDTO(meta);
+    }
+
     public void eliminar(Empleado empleado, Long id) {
         metaAhorroRepository.delete(obtenerPropia(empleado, id));
     }

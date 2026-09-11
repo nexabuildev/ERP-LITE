@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { crearMetaAhorro, getMisMetasAhorro, aportarAhorro, eliminarMetaAhorro } from '../../api'
+import { crearMetaAhorro, getMisMetasAhorro, aportarAhorro, retirarAhorro, eliminarMetaAhorro } from '../../api'
 
 function Ahorros() {
   const { token } = useOutletContext()
@@ -41,6 +41,19 @@ function Ahorros() {
     setError(null)
     try {
       await aportarAhorro(token, id, monto)
+      setAportaciones({ ...aportaciones, [id]: '' })
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const retirar = async (id) => {
+    const monto = Number(aportaciones[id])
+    if (!monto || monto <= 0) return
+    setError(null)
+    try {
+      await retirarAhorro(token, id, monto)
       setAportaciones({ ...aportaciones, [id]: '' })
       cargar()
     } catch (err) {
@@ -99,16 +112,19 @@ function Ahorros() {
               <span className="muted">{m.fechaObjetivo ? `Objetivo: ${m.fechaObjetivo}` : 'Sin fecha límite'}</span>
             </div>
 
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${m.porcentajeCompletado}%` }} />
+            <div className="progress-wrap">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${m.porcentajeCompletado}%` }} />
+              </div>
+              <span className="progress-label">{m.porcentajeCompletado}%</span>
             </div>
             <p className="muted small" style={{ marginTop: 8 }}>
-              {m.montoActual.toFixed(2)} € de {m.montoObjetivo.toFixed(2)} € ({m.porcentajeCompletado}%)
+              {m.montoActual.toFixed(2)} € de {m.montoObjetivo.toFixed(2)} €
             </p>
 
             <div className="inline-form" style={{ marginTop: 16 }}>
               <div className="field">
-                <label>Aportar (€)</label>
+                <label>Cantidad (€)</label>
                 <input
                   type="number"
                   min="0"
@@ -119,6 +135,9 @@ function Ahorros() {
               </div>
               <button className="btn-primary" onClick={() => aportar(m.id)}>
                 Aportar
+              </button>
+              <button className="btn-small" onClick={() => retirar(m.id)}>
+                Retirar
               </button>
               <button className="btn-small btn-danger" onClick={() => borrar(m.id)}>
                 Eliminar meta

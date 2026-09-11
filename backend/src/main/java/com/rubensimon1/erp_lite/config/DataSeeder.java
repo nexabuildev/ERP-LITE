@@ -7,8 +7,10 @@ import com.rubensimon1.erp_lite.repository.ProductoRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.rubensimon1.erp_lite.entity.AjusteVacaciones;
 import com.rubensimon1.erp_lite.entity.Alerta;
 import com.rubensimon1.erp_lite.entity.CuentaBancaria;
+import com.rubensimon1.erp_lite.entity.DeclaracionPresentada;
 import com.rubensimon1.erp_lite.entity.Departamento;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.entity.EstadoVacacion;
@@ -22,8 +24,10 @@ import com.rubensimon1.erp_lite.entity.SolicitudVacaciones;
 import com.rubensimon1.erp_lite.entity.TipoMovimiento;
 import com.rubensimon1.erp_lite.entity.TipoPago;
 import com.rubensimon1.erp_lite.entity.TipoTrabajador;
+import com.rubensimon1.erp_lite.repository.AjusteVacacionesRepository;
 import com.rubensimon1.erp_lite.repository.AlertaRepository;
 import com.rubensimon1.erp_lite.repository.CuentaBancariaRepository;
+import com.rubensimon1.erp_lite.repository.DeclaracionPresentadaRepository;
 import com.rubensimon1.erp_lite.repository.DepartamentoRepository;
 import com.rubensimon1.erp_lite.repository.EmpleadoRepository;
 import com.rubensimon1.erp_lite.repository.MetaAhorroRepository;
@@ -46,6 +50,8 @@ public class DataSeeder implements CommandLineRunner {
     private final MetaAhorroRepository metaAhorroRepository;
     private final MovimientoRepository movimientoRepository;
     private final AlertaRepository alertaRepository;
+    private final AjusteVacacionesRepository ajusteVacacionesRepository;
+    private final DeclaracionPresentadaRepository declaracionPresentadaRepository;
     private final PasswordEncoder passwordEncoder;
 
     /*
@@ -61,6 +67,8 @@ public class DataSeeder implements CommandLineRunner {
             MetaAhorroRepository metaAhorroRepository,
             MovimientoRepository movimientoRepository,
             AlertaRepository alertaRepository,
+            AjusteVacacionesRepository ajusteVacacionesRepository,
+            DeclaracionPresentadaRepository declaracionPresentadaRepository,
             PasswordEncoder passwordEncoder) {
         this.departamentoRepository = departamentoRepository;
         this.empleadoRepository = empleadoRepository;
@@ -71,6 +79,8 @@ public class DataSeeder implements CommandLineRunner {
         this.metaAhorroRepository = metaAhorroRepository;
         this.movimientoRepository = movimientoRepository;
         this.alertaRepository = alertaRepository;
+        this.ajusteVacacionesRepository = ajusteVacacionesRepository;
+        this.declaracionPresentadaRepository = declaracionPresentadaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -117,6 +127,21 @@ public class DataSeeder implements CommandLineRunner {
             dev.setSalarioBrutoAnual(32000.0);
             dev.setDni("11223344B");
             dev.setNumeroSeguridadSocial("281234567890");
+            dev.setCalle("Calle Mayor");
+            dev.setNumero("12");
+            dev.setPiso("3ºB");
+            dev.setCodigoPostal("28001");
+            dev.setCiudad("Madrid");
+            dev.setProvincia("Madrid");
+            dev.setEmpresaNombre("Nexa Build S.L.");
+            dev.setEmpresaCif("B12345678");
+            dev.setEmpresaDireccion("Calle Innovación 5, Madrid");
+            dev.setEmpresaTelefono("910000000");
+            dev.setGrupoSanguineo("0+");
+            dev.setAlergias("Ninguna conocida");
+            dev.setContactoEmergenciaNombre("Marta Dev");
+            dev.setContactoEmergenciaTelefono("600111222");
+            dev.setSeguroMedico("Sanitas");
 
             Empleado recruiter = new Empleado();
             recruiter.setNombre("Ana Recruiter");
@@ -239,6 +264,27 @@ public class DataSeeder implements CommandLineRunner {
                     alerta(dev, "Renovar carnet de conducir", LocalDate.now().plusMonths(6), null),
                     alerta(dev, "ITV del coche", LocalDate.now().minusDays(3), "Ya vencida, pedir cita")
             ));
+
+            /*
+             * Ajuste manual de vacaciones (ej: dia extra por convenio) y una
+             * declaracion fiscal ya presentada, para que el desglose y el
+             * historial no se vean vacios en la primera carga.
+             */
+            AjusteVacaciones ajuste = new AjusteVacaciones();
+            ajuste.setEmpleado(dev);
+            ajuste.setDias(1);
+            ajuste.setConcepto("Dia adicional por convenio");
+            ajuste.setFecha(LocalDate.now().minusMonths(1));
+            ajusteVacacionesRepository.save(ajuste);
+
+            DeclaracionPresentada declaracion = new DeclaracionPresentada();
+            declaracion.setEmpleado(carlos);
+            declaracion.setModelo("303");
+            declaracion.setPeriodo(LocalDate.now().getYear() + " - T1");
+            declaracion.setFechaPresentacion(LocalDate.now().minusMonths(2));
+            declaracion.setImporte(320.50);
+            declaracion.setNotas("Presentada online");
+            declaracionPresentadaRepository.save(declaracion);
 
             /*
              * Crear productos

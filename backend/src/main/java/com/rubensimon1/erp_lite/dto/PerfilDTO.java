@@ -29,4 +29,22 @@ public class PerfilDTO {
     private String nif;
     private String epigrafeIae;
     private LocalDate fechaAltaAutonomo;
+
+    private String calle;
+    private String numero;
+    private String piso;
+    private String codigoPostal;
+    private String ciudad;
+    private String provincia;
+
+    private String empresaNombre;
+    private String empresaCif;
+    private String empresaDireccion;
+    private String empresaTelefono;
+
+    private String grupoSanguineo;
+    private String alergias;
+    private String contactoEmergenciaNombre;
+    private String contactoEmergenciaTelefono;
+    private String seguroMedico;
 }

@@ -1,19 +1,30 @@
 package com.rubensimon1.erp_lite.service;
 
 import com.rubensimon1.erp_lite.dto.DeclaracionDTO;
+import com.rubensimon1.erp_lite.dto.DeclaracionPresentadaDTO;
+import com.rubensimon1.erp_lite.dto.DeclaracionPresentadaInputDTO;
+import com.rubensimon1.erp_lite.entity.DeclaracionPresentada;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.entity.TipoTrabajador;
+import com.rubensimon1.erp_lite.repository.DeclaracionPresentadaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@RequiredArgsConstructor
 public class DeclaracionesService {
+
+    private final DeclaracionPresentadaRepository declaracionPresentadaRepository;
 
     public List<DeclaracionDTO> misDeclaraciones(Empleado empleado) {
         LocalDate hoy = LocalDate.now();
@@ -32,6 +43,46 @@ public class DeclaracionesService {
 
         declaraciones.sort(Comparator.comparing(DeclaracionDTO::getFechaLimite));
         return declaraciones;
+    }
+
+    public DeclaracionPresentadaDTO registrarPresentada(Empleado empleado, DeclaracionPresentadaInputDTO input) {
+        DeclaracionPresentada d = new DeclaracionPresentada();
+        d.setEmpleado(empleado);
+        d.setModelo(input.getModelo());
+        d.setPeriodo(input.getPeriodo());
+        d.setFechaPresentacion(input.getFechaPresentacion());
+        d.setImporte(input.getImporte());
+        d.setNotas(input.getNotas());
+
+        declaracionPresentadaRepository.save(d);
+        return toPresentadaDTO(d);
+    }
+
+    public List<DeclaracionPresentadaDTO> misPresentadas(Empleado empleado) {
+        return declaracionPresentadaRepository.findByEmpleadoOrderByFechaPresentacionDesc(empleado)
+                .stream().map(this::toPresentadaDTO).collect(Collectors.toList());
+    }
+
+    public void eliminarPresentada(Empleado empleado, Long id) {
+        DeclaracionPresentada d = declaracionPresentadaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Declaracion no encontrada"));
+
+        if (!d.getEmpleado().getId().equals(empleado.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes eliminar una declaracion de otro empleado");
+        }
+
+        declaracionPresentadaRepository.delete(d);
+    }
+
+    private DeclaracionPresentadaDTO toPresentadaDTO(DeclaracionPresentada d) {
+        return DeclaracionPresentadaDTO.builder()
+                .id(d.getId())
+                .modelo(d.getModelo())
+                .periodo(d.getPeriodo())
+                .fechaPresentacion(d.getFechaPresentacion())
+                .importe(d.getImporte())
+                .notas(d.getNotas())
+                .build();
     }
 
     private DeclaracionDTO crear(String nombre, String descripcion, LocalDate fechaLimite, LocalDate hoy) {

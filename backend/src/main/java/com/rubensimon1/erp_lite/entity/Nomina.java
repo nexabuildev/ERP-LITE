@@ -39,4 +39,10 @@ public class Nomina {
 
     @Column(nullable = false)
     private LocalDate fechaPago;
+
+    // --- Archivo adjunto (PDF/imagen de la nomina real), opcional ---
+    private String archivoNombre;
+    private String archivoTipo; // content-type, ej: application/pdf
+
+    private byte[] archivoContenido;
 }

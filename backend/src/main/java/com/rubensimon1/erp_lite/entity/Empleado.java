@@ -74,6 +74,34 @@ public class Empleado implements UserDetails {
     private String epigrafeIae;
     private java.time.LocalDate fechaAltaAutonomo;
 
+    // --- DIRECCIÓN ---
+    private String calle;
+    private String numero;
+    private String piso;
+    private String codigoPostal;
+    private String ciudad;
+    private String provincia;
+
+    // --- EMPRESA (informativo, introducido a mano por el ciudadano) ---
+    private String empresaNombre;
+    private String empresaCif;
+    private String empresaDireccion;
+    private String empresaTelefono;
+
+    // --- DATOS MÉDICOS (ficha de emergencia) ---
+    @Convert(converter = CryptoConverter.class)
+    private String grupoSanguineo;
+
+    @Convert(converter = CryptoConverter.class)
+    private String alergias;
+
+    private String contactoEmergenciaNombre;
+
+    @Convert(converter = CryptoConverter.class)
+    private String contactoEmergenciaTelefono;
+
+    private String seguroMedico;
+
     // --- MÉTODOS DE USER DETAILS (Contrato de Seguridad) ---
 
     @Override

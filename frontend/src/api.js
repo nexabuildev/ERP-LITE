@@ -1,10 +1,12 @@
 import { API_URL } from './config'
 
 async function request(path, token, options = {}) {
+  const isFormData = options.body instanceof FormData
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -54,6 +56,13 @@ export function updatePerfil(token, data) {
   })
 }
 
+export function cambiarCredenciales(token, data) {
+  return request('/api/v1/perfil/credenciales', token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
 // --- FICHAJES ---
 
 export function ficharEntrada(token) {
@@ -85,6 +94,17 @@ export function getSaldoVacaciones(token) {
   return request('/api/v1/vacaciones/saldo', token)
 }
 
+export function ajustarVacaciones(token, data) {
+  return request('/api/v1/vacaciones/ajustes', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getDesgloseVacaciones(token) {
+  return request('/api/v1/vacaciones/desglose', token)
+}
+
 export function getVacacionesPendientes(token) {
   return request('/api/v1/vacaciones/pendientes', token)
 }
@@ -101,6 +121,26 @@ export function rechazarVacaciones(token, id) {
 
 export function getMisNominas(token) {
   return request('/api/v1/nominas/mias', token)
+}
+
+export function subirNomina(token, formData) {
+  return request('/api/v1/nominas', token, {
+    method: 'POST',
+    body: formData,
+  })
+}
+
+export function eliminarNomina(token, id) {
+  return request(`/api/v1/nominas/${id}`, token, { method: 'DELETE' })
+}
+
+export async function abrirArchivoNomina(token, id) {
+  const response = await fetch(`${API_URL}/api/v1/nominas/${id}/archivo`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('No se pudo cargar el archivo')
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
 }
 
 // --- TELETRABAJO ---
@@ -126,6 +166,21 @@ export function getRegistroRetributivo(token) {
 
 export function getMisDeclaraciones(token) {
   return request('/api/v1/declaraciones/mias', token)
+}
+
+export function registrarDeclaracionPresentada(token, data) {
+  return request('/api/v1/declaraciones/presentadas', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getMisDeclaracionesPresentadas(token) {
+  return request('/api/v1/declaraciones/presentadas', token)
+}
+
+export function eliminarDeclaracionPresentada(token, id) {
+  return request(`/api/v1/declaraciones/presentadas/${id}`, token, { method: 'DELETE' })
 }
 
 // --- CUENTAS BANCARIAS ---
@@ -160,6 +215,13 @@ export function getMisMetasAhorro(token) {
 
 export function aportarAhorro(token, id, monto) {
   return request(`/api/v1/ahorros/${id}/aportar`, token, {
+    method: 'PUT',
+    body: JSON.stringify({ monto }),
+  })
+}
+
+export function retirarAhorro(token, id, monto) {
+  return request(`/api/v1/ahorros/${id}/retirar`, token, {
     method: 'PUT',
     body: JSON.stringify({ monto }),
   })

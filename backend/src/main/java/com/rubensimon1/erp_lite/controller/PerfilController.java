@@ -1,5 +1,7 @@
 package com.rubensimon1.erp_lite.controller;
 
+import com.rubensimon1.erp_lite.dto.CambiarCredencialesDTO;
+import com.rubensimon1.erp_lite.dto.CredencialesActualizadasDTO;
 import com.rubensimon1.erp_lite.dto.PerfilDTO;
 import com.rubensimon1.erp_lite.dto.PerfilUpdateDTO;
 import com.rubensimon1.erp_lite.entity.Empleado;
@@ -29,5 +31,11 @@ public class PerfilController {
     public PerfilDTO actualizar(@AuthenticationPrincipal Empleado empleado,
                                  @RequestBody @Valid PerfilUpdateDTO input) {
         return perfilService.actualizar(empleado, input);
+    }
+
+    @PutMapping("/credenciales")
+    public CredencialesActualizadasDTO cambiarCredenciales(@AuthenticationPrincipal Empleado empleado,
+                                                             @RequestBody @Valid CambiarCredencialesDTO input) {
+        return perfilService.cambiarCredenciales(empleado, input);
     }
 }

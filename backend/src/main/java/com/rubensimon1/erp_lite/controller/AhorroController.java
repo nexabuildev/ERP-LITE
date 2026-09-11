@@ -38,6 +38,13 @@ public class AhorroController {
         return ahorroService.aportar(empleado, id, input);
     }
 
+    @PutMapping("/{id}/retirar")
+    public MetaAhorroDTO retirar(@AuthenticationPrincipal Empleado empleado,
+                                  @PathVariable Long id,
+                                  @RequestBody @Valid AportacionInputDTO input) {
+        return ahorroService.retirar(empleado, id, input);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@AuthenticationPrincipal Empleado empleado, @PathVariable Long id) {
         ahorroService.eliminar(empleado, id);

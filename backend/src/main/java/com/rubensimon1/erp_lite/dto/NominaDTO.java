@@ -19,4 +19,7 @@ public class NominaDTO {
     private Double deducciones;
     private Double salarioNeto;
     private LocalDate fechaPago;
+    private boolean tieneArchivo;
+    private String archivoNombre;
+    private String archivoTipo;
 }

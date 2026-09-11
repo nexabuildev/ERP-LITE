@@ -1,5 +1,7 @@
 package com.rubensimon1.erp_lite.controller;
 
+import com.rubensimon1.erp_lite.dto.AjusteVacacionesInputDTO;
+import com.rubensimon1.erp_lite.dto.DesgloseVacacionesDTO;
 import com.rubensimon1.erp_lite.dto.SaldoVacacionesDTO;
 import com.rubensimon1.erp_lite.dto.SolicitudVacacionesDTO;
 import com.rubensimon1.erp_lite.dto.SolicitudVacacionesInputDTO;
@@ -35,6 +37,17 @@ public class VacacionesController {
     @GetMapping("/saldo")
     public SaldoVacacionesDTO miSaldo(@AuthenticationPrincipal Empleado empleado) {
         return vacacionesService.miSaldo(empleado);
+    }
+
+    @PostMapping("/ajustes")
+    public DesgloseVacacionesDTO ajustar(@AuthenticationPrincipal Empleado empleado,
+                                          @RequestBody @Valid AjusteVacacionesInputDTO input) {
+        return vacacionesService.ajustar(empleado, input);
+    }
+
+    @GetMapping("/desglose")
+    public List<DesgloseVacacionesDTO> desglose(@AuthenticationPrincipal Empleado empleado) {
+        return vacacionesService.desglose(empleado);
     }
 
     @GetMapping("/pendientes")
