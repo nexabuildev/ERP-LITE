@@ -1,6 +1,7 @@
 package com.rubensimon1.erp_lite.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -23,6 +24,9 @@ public class SecurityConfiguration {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -56,9 +60,9 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Permitir el origen de tu Frontend (React/Vite suele ser el 5173)
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); 
+
+        // Orígenes permitidos: app.cors.allowed-origins (env CORS_ALLOWED_ORIGINS), separados por comas
+        configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         
         // Permitir todos los métodos HTTP
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

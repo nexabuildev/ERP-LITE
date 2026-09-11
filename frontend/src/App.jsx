@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URL } from './config'
 
 function App() {
   const [email, setEmail] = useState('')
@@ -12,7 +13,7 @@ function App() {
     e.preventDefault()
     setError(null)
     try {
-      const response = await fetch('http://localhost:8080/api/v1/auth/login', {
+      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -27,7 +28,7 @@ function App() {
 
   const obtenerEmpleados = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/empleados', {
+      const response = await fetch(`${API_URL}/api/v1/empleados`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
