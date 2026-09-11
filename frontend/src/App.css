@@ -101,6 +101,7 @@ h1, h2, h3 {
 
 .auth-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   display: flex;
   align-items: center;
@@ -155,7 +156,7 @@ h1, h2, h3 {
 
 .auth-brand h1 {
   margin: 0 0 6px;
-  font-size: 30px;
+  font-size: clamp(26px, 3vw + 18px, 34px);
   letter-spacing: 0.03em;
 }
 
@@ -335,6 +336,7 @@ h1, h2, h3 {
 .portal {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--paper);
   color: var(--ink);
 }
@@ -350,6 +352,7 @@ h1, h2, h3 {
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100dvh; /* evita el salto/atasco de 100vh en Safari/iPad al hacer scroll */
   overflow-y: auto;
 }
 
@@ -361,7 +364,7 @@ h1, h2, h3 {
 
 .sidebar-mark {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: clamp(22px, 1.4vw + 16px, 28px);
   font-weight: 700;
   letter-spacing: 0.06em;
   display: block;
@@ -459,8 +462,10 @@ h1, h2, h3 {
 
 .portal-content {
   flex: 1;
-  padding: 40px 44px 60px;
-  max-width: 980px;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 48px) clamp(18px, 4vw, 64px) 60px;
+  max-width: 1600px;
+  width: 100%;
 }
 
 /* --- PÁGINAS --- */
@@ -552,7 +557,7 @@ h1, h2, h3 {
 }
 
 .page-header h1 {
-  font-size: 32px;
+  font-size: clamp(24px, 1.6vw + 18px, 40px);
   margin-bottom: 6px;
 }
 
@@ -603,7 +608,7 @@ a.stat-block:hover {
 
 .stat-block-value {
   font-family: var(--font-display);
-  font-size: 34px;
+  font-size: clamp(22px, 1vw + 18px, 36px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -885,7 +890,7 @@ tbody tr:hover {
 
 .timeline-days {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: clamp(20px, 1.4vw + 14px, 26px);
   font-weight: 600;
   color: var(--accent);
   min-width: 60px;
@@ -973,9 +978,25 @@ tbody tr:hover {
   text-shadow: 0 0 6px var(--paper-raised);
 }
 
-/* --- RESPONSIVE --- */
+/* --- RESPONSIVE ---
+   Niveles: escritorio grande (por defecto, hasta 1600px de contenido) ->
+   tablet/iPad, en vertical u horizontal (<=1024px, sidebar pasa a barra
+   superior — evitamos un tramo intermedio con sidebar vertical estrecho,
+   que es justo lo que se veía mal) -> móvil (<=640px, formularios a una
+   columna) -> móvil muy estrecho (<=380px). */
 
-@media (max-width: 768px) {
+/* Pantallas grandes: dejamos que las rejillas usen el espacio de sobra */
+@media (min-width: 1440px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+/* Tablet (iPad en cualquier orientación) y móviles grandes: el sidebar deja
+   de ser una columna fija de altura 100vh (con position:sticky eso se queda
+   "pillado" al hacer scroll en Safari/iPad por la barra de direcciones
+   dinámica) y pasa a ser una barra normal arriba del contenido. */
+@media (max-width: 1024px) {
   .portal {
     flex-direction: column;
   }
@@ -983,9 +1004,11 @@ tbody tr:hover {
   .sidebar {
     width: 100%;
     height: auto;
+    max-height: none;
     position: relative;
+    top: auto;
     flex-direction: column;
-    padding: 20px;
+    padding: 18px 20px;
   }
 
   .sidebar-nav {
@@ -998,6 +1021,7 @@ tbody tr:hover {
     border-left: none;
     border-bottom: 3px solid transparent;
     padding: 8px 10px;
+    font-size: 13px;
   }
 
   .sidebar-link.active {
@@ -1019,15 +1043,109 @@ tbody tr:hover {
   }
 
   .portal-content {
-    padding: 28px 18px 48px;
+    padding: 24px 20px 48px;
+    max-width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  .card-header,
+  .report-card-header,
+  .page-header-actions {
+    align-items: flex-start;
+  }
+}
+
+/* Móvil: todo a una columna, formularios apilados, tarjetas más compactas */
+@media (max-width: 640px) {
+  .auth-screen {
+    padding: 16px;
   }
 
   .auth-card {
-    padding: 32px 22px;
+    padding: 30px 20px;
+  }
+
+  .auth-theme-toggle {
+    top: 14px;
+    right: 14px;
+  }
+
+  .portal-content {
+    padding: 20px 16px 40px;
+  }
+
+  .card {
+    padding: 18px 16px;
+  }
+
+  .stats-grid,
+  .stats-grid-compact {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .inline-form .field,
+  .inline-form .field-grow {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .inline-form > button {
+    width: 100%;
+  }
+
+  .field-row {
+    flex-direction: column;
+  }
+
+  .field-row .field {
+    min-width: 0;
+  }
+
+  table {
+    min-width: 460px;
   }
 
   .ledger-row {
     flex-wrap: wrap;
+  }
+
+  .ledger-row .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .timeline-item {
+    padding: 14px 16px;
+  }
+
+  .notif-cluster {
+    align-self: flex-end;
+  }
+}
+
+/* Móvil muy estrecho */
+@media (max-width: 380px) {
+  .portal-content {
+    padding: 16px 12px 32px;
+  }
+
+  .card {
+    padding: 14px 12px;
+  }
+
+  .stats-grid,
+  .stats-grid-compact {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1068,9 +1186,15 @@ tbody tr:hover {
   flex-shrink: 0;
 }
 
+.chart-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .chart-svg-wrap {
   position: relative;
   width: 100%;
+  min-width: 480px;
 }
 
 .chart-axis-label {

@@ -74,6 +74,7 @@ function HistorialChart({ puntos }) {
         </span>
       </div>
 
+      <div className="chart-scroll">
       <div className="chart-svg-wrap" style={{ aspectRatio: `${W} / ${H}` }}>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" role="img" aria-label="Historial mensual de ingresos, gastos y saldo neto acumulado">
           {gridTicks.map((v) => (
@@ -176,6 +177,7 @@ function HistorialChart({ puntos }) {
             </span>
           </div>
         )}
+      </div>
       </div>
     </div>
   )
