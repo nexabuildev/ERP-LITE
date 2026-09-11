@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "fichajes")
@@ -20,6 +22,7 @@ public class Fichaje {
 
     @ManyToOne
     @JoinColumn(name = "empleado_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Empleado empleado;
 
     @Column(nullable = false)

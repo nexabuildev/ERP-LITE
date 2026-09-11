@@ -29,6 +29,13 @@ public class VacacionesController {
         return vacacionesService.solicitar(empleado, input);
     }
 
+    @PutMapping("/{id}")
+    public SolicitudVacacionesDTO editar(@AuthenticationPrincipal Empleado empleado,
+                                          @PathVariable Long id,
+                                          @RequestBody @Valid SolicitudVacacionesInputDTO input) {
+        return vacacionesService.editar(empleado, id, input);
+    }
+
     @GetMapping("/mias")
     public List<SolicitudVacacionesDTO> misSolicitudes(@AuthenticationPrincipal Empleado empleado) {
         return vacacionesService.misSolicitudes(empleado);

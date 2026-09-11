@@ -22,6 +22,7 @@ public class MetaAhorro {
 
     @ManyToOne
     @JoinColumn(name = "empleado_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Empleado empleado;
 
     @Column(nullable = false)

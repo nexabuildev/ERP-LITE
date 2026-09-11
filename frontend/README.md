@@ -1,17 +1,17 @@
-# 🖥️ ERP Lite Frontend
+# 🏛️ ZIVIKO Web
 
-Interfaz de usuario para el sistema ERP Lite desarrollada con **React 19** y **Vite 7**.
+**Portal del Empleado / Ciudadano** diseñado para centralizar y simplificar la gestión de la vida laboral, financiera y administrativa. ZIVIKO no es un ERP tradicional, es un centro de mandos personal con una estética brutalista y minimalista.
 
 ## 📊 Estado del Proyecto
 
 | Aspecto | Estado | Observaciones |
 |---------|--------|---------------|
-| ⚛️ Framework | ✅ React 19 | Última versión |
+| ⚛️ Framework | ✅ React 19 | Interfaz rápida y reactiva |
 | ⚡ Bundler | ✅ Vite 7 | Build ultrarrápido |
-| 🔐 Autenticación | ✅ JWT | Integración con backend |
-| 🎨 Estilos | ✅ CSS-in-JS | Estilos inline |
-| 📱 Responsive | ⚠️ Básico | Funcional pero mejorable |
-| 🧩 Componentes | ⚠️ Monolítico | Todo en App.jsx |
+| 🔐 Autenticación | ✅ JWT | Autenticación robusta y segura |
+| 🎨 Estilos | ✅ CSS Puro | Diseño brutalista/minimalista |
+| 📱 Responsive | ✅ Adaptable | Optimizado para web y móvil |
+| 🧩 Arquitectura | ✅ Modular | Separado por áreas de negocio |
 
 ## 🚀 Cómo Ejecutar
 
@@ -24,23 +24,13 @@ npm run dev
 
 # Construir para producción
 npm run build
-
-# Previsualizar build
-npm run preview
 ```
 
-**Servidor de desarrollo:** http://localhost:5173
+**Servidor de desarrollo:** `http://localhost:5173`
 
-## 🔐 Conexión con Backend
+## 🔐 Conexión con el Ecosistema
 
-El frontend se conecta al backend en `http://localhost:8080`. Asegúrate de que el backend esté ejecutándose antes de usar la aplicación.
-
-### Flujo de Autenticación
-
-1. Usuario introduce email y contraseña
-2. Se hace POST a `/api/v1/auth/login`
-3. Se recibe token JWT
-4. Token se usa en cabecera `Authorization: Bearer <token>`
+El frontend web se comunica con el backend centralizado alojado en `https://erplite.onrender.com` (o en local vía `http://localhost:8080`). 
 
 ### Credenciales de Prueba
 
@@ -49,66 +39,58 @@ El frontend se conecta al backend en `http://localhost:8080`. Asegúrate de que 
 | ruben@erplite.com | 1234 | ADMIN |
 | ana@erplite.com | 1234 | USER |
 
-## 📦 Tecnologías Usadas
+## 🌟 Funcionalidades Principales
 
-- **React 19.2.0** - Biblioteca UI
-- **Vite 7.2.4** - Build tool y dev server
-- **ESLint 9** - Linting de código
+ZIVIKO se divide en cuatro grandes pilares para el usuario:
+
+### 💼 Trabajo
+- **Fichajes**: Registro de entradas, salidas y cómputo de horas mensuales/semanales.
+- **Vacaciones**: Consulta del saldo anual, días disfrutados, días restantes y estado de las solicitudes.
+- **Nóminas**: Archivo histórico de nóminas con desglose de salario bruto, neto, retenciones y Seguridad Social.
+- **Teletrabajo**: Registro mensual de días teletrabajados y cálculo de compensación económica.
+- **Registro Retributivo**: Análisis de brecha salarial (acceso especial/administrador).
+
+### 💰 Dinero
+- **Cuentas Bancarias**: Visión general del patrimonio, IBANs, titulares y saldo por cuenta.
+- **Movimientos**: Registro de ingresos y gastos, con balance mensual y gráficos de evolución.
+- **Metas de Ahorro**: Creación y seguimiento de objetivos financieros con barras de progreso.
+
+### 🏛️ Trámites y Alertas
+- **Declaraciones**: Calendario de obligaciones tributarias (renta, IVA, etc.), vencimientos y registro de presentaciones.
+- **Alertas**: Notificaciones automáticas sobre trámites a punto de caducar o vencidos.
+
+## 🎨 Diseño e Identidad Visual
+
+ZIVIKO abandona el diseño corporativo aburrido en favor de un enfoque **Brutalista / Neo-Retro**.
+Se caracteriza por fondos color papel, bordes negros gruesos y bloques de color muy saturados y elegantes.
+
+**Paleta de Colores (CSS Variables):**
+- `--paper`: `#F4F1EA` (Fondo principal, tono papel pergamino)
+- `--ink`: `#14110F` (Texto y bordes gruesos)
+- `--accent`: `#7A2E2E` (Rojo Vino - Primario)
+- `--ochre`: `#B8860B` (Ocre - Secundario)
+- `--forest`: `#2F5233` (Verde Bosque - Éxito/Balances positivos)
 
 ## 🗂️ Estructura del Proyecto
 
 ```
 frontend/
-├── public/              # Archivos estáticos
+├── public/              # Archivos estáticos y favicons
 ├── src/
-│   ├── assets/          # Recursos (imágenes, iconos)
-│   ├── App.jsx          # Componente principal (Login + Dashboard)
-│   ├── App.css          # Estilos del componente App
-│   ├── index.css        # Estilos globales
-│   └── main.jsx         # Punto de entrada
-├── index.html           # Template HTML
-├── package.json         # Dependencias y scripts
-├── vite.config.js       # Configuración de Vite
-└── eslint.config.js     # Configuración de ESLint
+│   ├── api.js           # Capa de red y endpoints (Fetch API)
+│   ├── App.jsx          # Enrutador principal y layout
+│   ├── index.css        # Sistema de diseño global y variables CSS
+│   ├── main.jsx         # Punto de entrada React
+│   └── components/      # Componentes modulares
+│       ├── Login.jsx            
+│       ├── Dashboard.jsx
+│       ├── AlertasHub.jsx
+│       ├── Perfil.jsx
+│       ├── Dinero/      # Submódulos financieros
+│       ├── Trabajo/     # Submódulos laborales
+│       └── UI/          # Botones, Cards, Loaders reutilizables
 ```
-
-## 🌐 Funcionalidades
-
-### 🔓 Pantalla de Login
-
-- Formulario de autenticación con email y contraseña
-- Validación de errores
-- Diseño moderno con gradiente
-
-### 🔒 Dashboard (requiere login)
-
-- Navbar con botón de cerrar sesión
-- Gestión de empleados
-- Tabla dinámica con datos del backend
-- Badges de rol (ADMIN/USER)
-
-## 🎨 Diseño
-
-La aplicación usa un esquema de colores profesional:
-
-| Elemento | Color | Uso |
-|----------|-------|-----|
-| Primary | `#764ba2` | Botones principales, gradientes |
-| Secondary | `#667eea` | Gradientes |
-| Navbar | `#2c3e50` | Barra superior |
-| Success | `#27ae60` | Badges USER |
-| Danger | `#c0392b` | Badges ADMIN, errores |
-| Info | `#3498db` | Botones secundarios |
-
-## 📋 Mejoras Futuras
-
-- [ ] Separar componentes (Login, Dashboard, Navbar, etc.)
-- [ ] Añadir React Router para navegación
-- [ ] Implementar gestión de estado global (Context/Redux)
-- [ ] Añadir más módulos (Departamentos, Productos)
-- [ ] Mejorar responsive design
-- [ ] Añadir tests con Vitest
 
 ---
 
-Desarrollado por **Ruben Simon** 🚀
+Desarrollado como núcleo de la plataforma **ZIVIKO** 🚀
