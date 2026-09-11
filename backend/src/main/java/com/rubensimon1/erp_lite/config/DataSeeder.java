@@ -15,6 +15,7 @@ import com.rubensimon1.erp_lite.entity.TipoCuenta;
 import com.rubensimon1.erp_lite.entity.DeclaracionPresentada;
 import com.rubensimon1.erp_lite.entity.Departamento;
 import com.rubensimon1.erp_lite.entity.Empleado;
+import com.rubensimon1.erp_lite.entity.Empresa;
 import com.rubensimon1.erp_lite.entity.EstadoVacacion;
 import com.rubensimon1.erp_lite.entity.Genero;
 import com.rubensimon1.erp_lite.entity.MetaAhorro;
@@ -34,6 +35,7 @@ import com.rubensimon1.erp_lite.repository.CuentaBancariaRepository;
 import com.rubensimon1.erp_lite.repository.DeclaracionPresentadaRepository;
 import com.rubensimon1.erp_lite.repository.DepartamentoRepository;
 import com.rubensimon1.erp_lite.repository.EmpleadoRepository;
+import com.rubensimon1.erp_lite.repository.EmpresaRepository;
 import com.rubensimon1.erp_lite.repository.MetaAhorroRepository;
 import com.rubensimon1.erp_lite.repository.MetodoPagoRepository;
 import com.rubensimon1.erp_lite.repository.MovimientoRepository;
@@ -58,6 +60,7 @@ public class DataSeeder implements CommandLineRunner {
     private final AjusteVacacionesRepository ajusteVacacionesRepository;
     private final DeclaracionPresentadaRepository declaracionPresentadaRepository;
     private final MetodoPagoRepository metodoPagoRepository;
+    private final EmpresaRepository empresaRepository;
     private final PasswordEncoder passwordEncoder;
 
     /*
@@ -76,6 +79,7 @@ public class DataSeeder implements CommandLineRunner {
             AjusteVacacionesRepository ajusteVacacionesRepository,
             DeclaracionPresentadaRepository declaracionPresentadaRepository,
             MetodoPagoRepository metodoPagoRepository,
+            EmpresaRepository empresaRepository,
             PasswordEncoder passwordEncoder) {
         this.departamentoRepository = departamentoRepository;
         this.empleadoRepository = empleadoRepository;
@@ -89,6 +93,7 @@ public class DataSeeder implements CommandLineRunner {
         this.ajusteVacacionesRepository = ajusteVacacionesRepository;
         this.metodoPagoRepository = metodoPagoRepository;
         this.declaracionPresentadaRepository = declaracionPresentadaRepository;
+        this.empresaRepository = empresaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -141,10 +146,6 @@ public class DataSeeder implements CommandLineRunner {
             dev.setCodigoPostal("28001");
             dev.setCiudad("Madrid");
             dev.setProvincia("Madrid");
-            dev.setEmpresaNombre("Nexa Build S.L.");
-            dev.setEmpresaCif("B12345678");
-            dev.setEmpresaDireccion("Calle Innovación 5, Madrid");
-            dev.setEmpresaTelefono("910000000");
             dev.setGrupoSanguineo("0+");
             dev.setAlergias("Ninguna conocida");
             dev.setContactoEmergenciaNombre("Marta Dev");
@@ -256,6 +257,16 @@ public class DataSeeder implements CommandLineRunner {
             efectivo.setSaldoActual(60.0);
 
             cuentaBancariaRepository.saveAll(List.of(cuenta, efectivo));
+
+            Empresa empresa = new Empresa();
+            empresa.setEmpleado(dev);
+            empresa.setNombre("Nexa Build S.L.");
+            empresa.setCif("B12345678");
+            empresa.setDireccion("Calle Innovación 5, Madrid");
+            empresa.setTelefono("910000000");
+            empresa.setSigueAhi(true);
+            empresa.setFechaInicio(LocalDate.now().minusYears(2));
+            empresaRepository.save(empresa);
 
             MetodoPago tarjeta = new MetodoPago();
             tarjeta.setEmpleado(dev);

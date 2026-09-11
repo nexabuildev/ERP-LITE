@@ -25,6 +25,8 @@ public class CuentaBancariaService {
         CuentaBancaria cuenta = new CuentaBancaria();
         cuenta.setEmpleado(empleado);
         aplicarCambios(cuenta, input);
+        // El saldo inicial solo se fija al crear la cuenta.
+        cuenta.setSaldoActual(input.getSaldoActual() != null ? input.getSaldoActual() : 0.0);
 
         cuentaBancariaRepository.save(cuenta);
         return toDTO(cuenta);
@@ -38,6 +40,8 @@ public class CuentaBancariaService {
     public CuentaBancariaDTO actualizar(Empleado empleado, Long id, CuentaBancariaInputDTO input) {
         CuentaBancaria cuenta = obtenerPropia(empleado, id);
         aplicarCambios(cuenta, input);
+        // saldoActual NO se toca aquí: a partir de la creación solo cambia por
+        // movimientos, ajustes y aportaciones de ahorro (ver MovimientoService/AhorroService).
 
         cuentaBancariaRepository.save(cuenta);
         return toDTO(cuenta);
@@ -60,10 +64,16 @@ public class CuentaBancariaService {
                 .mapToDouble(c -> c.getSaldoActual() != null ? c.getSaldoActual() : 0.0)
                 .sum();
 
+        double totalPaypal = cuentas.stream()
+                .filter(c -> c.getCategoria() == CategoriaCuenta.PAYPAL)
+                .mapToDouble(c -> c.getSaldoActual() != null ? c.getSaldoActual() : 0.0)
+                .sum();
+
         return ResumenCuentasDTO.builder()
-                .totalGeneral(redondear(totalBanco + totalEfectivo))
+                .totalGeneral(redondear(totalBanco + totalEfectivo + totalPaypal))
                 .totalBanco(redondear(totalBanco))
                 .totalEfectivo(redondear(totalEfectivo))
+                .totalPaypal(redondear(totalPaypal))
                 .cuentas(cuentas.stream().map(this::toDTO).collect(Collectors.toList()))
                 .build();
     }
@@ -72,7 +82,6 @@ public class CuentaBancariaService {
         cuenta.setAlias(input.getAlias());
         cuenta.setCategoria(input.getCategoria());
         cuenta.setTipoCuenta(input.getTipoCuenta());
-        cuenta.setSaldoActual(input.getSaldoActual() != null ? input.getSaldoActual() : 0.0);
 
         if (input.getCategoria() == CategoriaCuenta.BANCO) {
             cuenta.setIban(input.getIban());

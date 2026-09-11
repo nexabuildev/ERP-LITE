@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { getPerfil, updatePerfil, cambiarCredenciales } from '../../api'
+import {
+  getPerfil,
+  updatePerfil,
+  cambiarCredenciales,
+  desactivarCuenta,
+  reactivarCuentaPropia,
+  eliminarCuentaDefinitivamente,
+  getResumenCuentas,
+} from '../../api'
+
+const PALABRA_CONFIRMACION = 'DELETE-CUENTA'
 
 function Perfil() {
   const { token, refreshPerfil } = useOutletContext()
   const [perfil, setPerfil] = useState(null)
   const [form, setForm] = useState(null)
+  const [resumenCuentas, setResumenCuentas] = useState(null)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -15,6 +26,10 @@ function Perfil() {
   const [credSuccess, setCredSuccess] = useState(false)
   const [credLoading, setCredLoading] = useState(false)
 
+  const [zonaPeligro, setZonaPeligro] = useState({ confirmacion: '', passwordActual: '' })
+  const [zonaPeligroError, setZonaPeligroError] = useState(null)
+  const [accionEnCurso, setAccionEnCurso] = useState(null) // 'desactivar' | 'eliminar' | 'reactivar' | null
+
   useEffect(() => {
     getPerfil(token)
       .then((p) => {
@@ -22,6 +37,7 @@ function Perfil() {
         setForm({ ...p, tipoTrabajador: p.tipoTrabajador || 'ASALARIADO' })
       })
       .catch((err) => setError(err.message))
+    getResumenCuentas(token).then(setResumenCuentas).catch(() => {})
   }, [token])
 
   if (!form) {
@@ -39,12 +55,18 @@ function Perfil() {
     setSuccess(false)
     setLoading(true)
     try {
+      const nombreCompleto = [form.nombre1, form.nombre2, form.apellidos].filter(Boolean).join(' ').trim() || form.nombre
       const actualizado = await updatePerfil(token, {
-        nombre: form.nombre,
+        nombre: nombreCompleto,
+        nombre1: form.nombre1,
+        nombre2: form.nombre2,
+        apellidos: form.apellidos,
         dni: form.dni,
         numeroSeguridadSocial: form.numeroSeguridadSocial,
         tipoTrabajador: form.tipoTrabajador,
         genero: form.genero || null,
+        categoriaProfesional: form.categoriaProfesional,
+        salarioBrutoAnual: form.salarioBrutoAnual !== '' && form.salarioBrutoAnual != null ? Number(form.salarioBrutoAnual) : null,
         nif: form.nif,
         epigrafeIae: form.epigrafeIae,
         fechaAltaAutonomo: form.fechaAltaAutonomo,
@@ -54,10 +76,12 @@ function Perfil() {
         codigoPostal: form.codigoPostal,
         ciudad: form.ciudad,
         provincia: form.provincia,
-        empresaNombre: form.empresaNombre,
-        empresaCif: form.empresaCif,
-        empresaDireccion: form.empresaDireccion,
-        empresaTelefono: form.empresaTelefono,
+        calle2: form.calle2,
+        numero2: form.numero2,
+        piso2: form.piso2,
+        codigoPostal2: form.codigoPostal2,
+        ciudad2: form.ciudad2,
+        provincia2: form.provincia2,
         grupoSanguineo: form.grupoSanguineo,
         alergias: form.alergias,
         contactoEmergenciaNombre: form.contactoEmergenciaNombre,
@@ -100,6 +124,50 @@ function Perfil() {
     }
   }
 
+  const handleDesactivar = async (e) => {
+    e.preventDefault()
+    setZonaPeligroError(null)
+    setAccionEnCurso('desactivar')
+    try {
+      await desactivarCuenta(token, zonaPeligro)
+      setZonaPeligro({ confirmacion: '', passwordActual: '' })
+      refreshPerfil?.()
+      setPerfil((p) => ({ ...p, activa: false }))
+    } catch (err) {
+      setZonaPeligroError(err.message)
+    } finally {
+      setAccionEnCurso(null)
+    }
+  }
+
+  const handleReactivar = async () => {
+    setZonaPeligroError(null)
+    setAccionEnCurso('reactivar')
+    try {
+      await reactivarCuentaPropia(token)
+      refreshPerfil?.()
+      setPerfil((p) => ({ ...p, activa: true }))
+    } catch (err) {
+      setZonaPeligroError(err.message)
+    } finally {
+      setAccionEnCurso(null)
+    }
+  }
+
+  const handleEliminar = async (e) => {
+    e.preventDefault()
+    setZonaPeligroError(null)
+    setAccionEnCurso('eliminar')
+    try {
+      await eliminarCuentaDefinitivamente(token, zonaPeligro)
+      localStorage.removeItem('token')
+      window.location.reload()
+    } catch (err) {
+      setZonaPeligroError(err.message)
+      setAccionEnCurso(null)
+    }
+  }
+
   const esAutonomo = form.tipoTrabajador === 'AUTONOMO'
 
   return (
@@ -113,12 +181,60 @@ function Perfil() {
       {error && <div className="alert alert-error">⚠️ {error}</div>}
       {success && <div className="alert alert-success">Perfil actualizado correctamente</div>}
 
+      {resumenCuentas && (
+        <div className="card">
+          <h2>Todo tu dinero</h2>
+          <div className="stats-grid stats-grid-compact">
+            <div className="stat-block">
+              <span className="stat-block-label">Total</span>
+              <span className="stat-block-value">{resumenCuentas.totalGeneral.toFixed(2)} €</span>
+            </div>
+            <div className="stat-block">
+              <span className="stat-block-label">En bancos</span>
+              <span className="stat-block-value">{resumenCuentas.totalBanco.toFixed(2)} €</span>
+            </div>
+            <div className="stat-block">
+              <span className="stat-block-label">En efectivo</span>
+              <span className="stat-block-value">{resumenCuentas.totalEfectivo.toFixed(2)} €</span>
+            </div>
+            <div className="stat-block">
+              <span className="stat-block-label">En PayPal</span>
+              <span className="stat-block-value">{resumenCuentas.totalPaypal.toFixed(2)} €</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {perfil.activa === false && (
+        <div className="card card-highlight">
+          <div className="card-header">
+            <div>
+              <h2>Tu cuenta está desactivada temporalmente</h2>
+              <p>Nadie más puede iniciar sesión en ella, pero tus datos siguen aquí. Puedes reactivarla cuando quieras.</p>
+            </div>
+            <button className="btn-primary" disabled={accionEnCurso === 'reactivar'} onClick={handleReactivar}>
+              {accionEnCurso === 'reactivar' ? 'Reactivando...' : 'Reactivar cuenta'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="stacked-form">
         <div className="card">
           <h2>Datos personales</h2>
-          <div className="field" style={{ marginBottom: 16 }}>
-            <label>Nombre completo</label>
-            <input {...campo('nombre')} required />
+          <div className="field-row" style={{ marginBottom: 16 }}>
+            <div className="field field-grow">
+              <label>Nombre</label>
+              <input {...campo('nombre1')} required />
+            </div>
+            <div className="field field-grow">
+              <label>Segundo nombre (opcional)</label>
+              <input {...campo('nombre2')} />
+            </div>
+            <div className="field field-grow">
+              <label>Apellidos</label>
+              <input {...campo('apellidos')} required />
+            </div>
           </div>
           <div className="field-row">
             <div className="field">
@@ -134,6 +250,8 @@ function Perfil() {
               <select value={form.tipoTrabajador || 'ASALARIADO'} onChange={(e) => setForm({ ...form, tipoTrabajador: e.target.value })}>
                 <option value="ASALARIADO">Asalariado</option>
                 <option value="AUTONOMO">Autónomo / cuenta propia</option>
+                <option value="DESEMPLEADO">Desempleado</option>
+                <option value="ESTUDIANTE">Estudiante</option>
               </select>
             </div>
             <div className="field">
@@ -164,17 +282,16 @@ function Perfil() {
             </div>
           )}
 
-          <div className="report-grid" style={{ marginTop: 16 }}>
-            <div>
-              <span className="muted">Categoría profesional</span>
-              <strong>{perfil.categoriaProfesional ?? '—'}</strong>
+          <div className="field-row" style={{ marginTop: 16 }}>
+            <div className="field field-grow">
+              <label>Categoría profesional</label>
+              <input {...campo('categoriaProfesional')} placeholder="Ej: Analista, Técnico..." />
             </div>
-            <div>
-              <span className="muted">Salario bruto anual</span>
-              <strong>{perfil.salarioBrutoAnual != null ? `${perfil.salarioBrutoAnual.toLocaleString('es-ES')} €` : '—'}</strong>
+            <div className="field">
+              <label>Salario bruto anual (€)</label>
+              <input type="number" step="0.01" {...campo('salarioBrutoAnual')} />
             </div>
           </div>
-          <p className="muted small">La categoría y el salario son de referencia y no se editan desde aquí.</p>
         </div>
 
         <div className="card">
@@ -210,28 +327,33 @@ function Perfil() {
         </div>
 
         <div className="card">
-          <h2>Empresa</h2>
-          <p className="muted small" style={{ marginTop: -8, marginBottom: 16 }}>
-            Información de tu empleador, introducida a mano para tener todo en un mismo sitio.
-          </p>
+          <h2>Segunda vivienda (opcional)</h2>
           <div className="field-row">
             <div className="field field-grow">
-              <label>Nombre de la empresa</label>
-              <input {...campo('empresaNombre')} />
+              <label>Calle</label>
+              <input {...campo('calle2')} placeholder="Calle Mayor" />
             </div>
             <div className="field">
-              <label>CIF</label>
-              <input {...campo('empresaCif')} />
+              <label>Número</label>
+              <input {...campo('numero2')} placeholder="12" />
+            </div>
+            <div className="field">
+              <label>Piso / puerta</label>
+              <input {...campo('piso2')} placeholder="3ºB" />
             </div>
           </div>
           <div className="field-row" style={{ marginTop: 16 }}>
-            <div className="field field-grow">
-              <label>Dirección</label>
-              <input {...campo('empresaDireccion')} />
-            </div>
             <div className="field">
-              <label>Teléfono</label>
-              <input {...campo('empresaTelefono')} />
+              <label>Código postal</label>
+              <input {...campo('codigoPostal2')} placeholder="28001" />
+            </div>
+            <div className="field field-grow">
+              <label>Ciudad</label>
+              <input {...campo('ciudad2')} placeholder="Madrid" />
+            </div>
+            <div className="field field-grow">
+              <label>Provincia</label>
+              <input {...campo('provincia2')} placeholder="Madrid" />
             </div>
           </div>
         </div>
@@ -307,6 +429,59 @@ function Perfil() {
             {credLoading ? 'Guardando...' : 'Actualizar credenciales'}
           </button>
         </form>
+      </div>
+
+      <div className="card" style={{ marginTop: 24, borderColor: 'var(--accent)' }}>
+        <h2>Zona peligrosa</h2>
+        <p className="muted small">
+          Escribe exactamente <strong className="mono">{PALABRA_CONFIRMACION}</strong> y tu contraseña para confirmar cualquiera de estas dos acciones.
+        </p>
+
+        {zonaPeligroError && <div className="alert alert-error">⚠️ {zonaPeligroError}</div>}
+
+        <div className="field-row" style={{ marginTop: 12, marginBottom: 20 }}>
+          <div className="field">
+            <label>Escribe "{PALABRA_CONFIRMACION}"</label>
+            <input
+              type="text"
+              value={zonaPeligro.confirmacion}
+              onChange={(e) => setZonaPeligro({ ...zonaPeligro, confirmacion: e.target.value })}
+              placeholder={PALABRA_CONFIRMACION}
+            />
+          </div>
+          <div className="field">
+            <label>Tu contraseña</label>
+            <input
+              type="password"
+              value={zonaPeligro.passwordActual}
+              onChange={(e) => setZonaPeligro({ ...zonaPeligro, passwordActual: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="inline-form">
+          <button
+            type="button"
+            className="btn-small"
+            disabled={accionEnCurso === 'desactivar' || perfil.activa === false}
+            onClick={handleDesactivar}
+          >
+            {accionEnCurso === 'desactivar' ? 'Desactivando...' : 'Eliminar temporalmente (desactivar)'}
+          </button>
+          <button
+            type="button"
+            className="btn-small btn-danger"
+            disabled={accionEnCurso === 'eliminar'}
+            onClick={handleEliminar}
+          >
+            {accionEnCurso === 'eliminar' ? 'Eliminando...' : 'Eliminar definitivamente'}
+          </button>
+        </div>
+        <p className="muted small" style={{ marginTop: 12 }}>
+          <strong>Temporal</strong>: nadie puede iniciar sesión hasta que la reactives (puedes hacerlo volviendo a
+          intentar el login). <strong>Definitiva</strong>: borra tu cuenta y todos tus datos sin posibilidad de
+          recuperarlos.
+        </p>
       </div>
     </div>
   )

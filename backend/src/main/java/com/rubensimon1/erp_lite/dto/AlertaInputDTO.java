@@ -1,5 +1,6 @@
 package com.rubensimon1.erp_lite.dto;
 
+import com.rubensimon1.erp_lite.entity.TipoAlerta;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -16,4 +17,9 @@ public class AlertaInputDTO {
     private LocalDate fechaVencimiento;
 
     private String notas;
+
+    private TipoAlerta tipo;
+
+    // Solo obligatorio si tipo = CITA_PREVIA
+    private LocalDate fechaCita;
 }

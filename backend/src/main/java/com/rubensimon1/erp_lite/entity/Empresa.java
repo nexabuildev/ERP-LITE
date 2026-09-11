@@ -4,17 +4,17 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.LocalDate;
+
 @Entity
-@Table(name = "alertas")
+@Table(name = "empresas")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Alerta {
+public class Empresa {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,17 +26,18 @@ public class Alerta {
     private Empleado empleado;
 
     @Column(nullable = false)
-    private String titulo; // Ej: "Renovar DNI", "ITV del coche"
+    private String nombre;
+
+    private String cif;
+    private String direccion;
+    private String telefono;
 
     @Column(nullable = false)
-    private LocalDate fechaVencimiento;
+    private Boolean sigueAhi = false;
 
-    private String notas;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TipoAlerta tipo = TipoAlerta.RECORDATORIO;
+    private LocalDate fechaInicio;
 
-    // Solo aplica si tipo = CITA_PREVIA
-    private LocalDate fechaCita;
+    // Nula si sigueAhi = true
+    private LocalDate fechaFin;
 }

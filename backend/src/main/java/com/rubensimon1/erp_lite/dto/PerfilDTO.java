@@ -17,6 +17,9 @@ import java.time.LocalDate;
 public class PerfilDTO {
     private Long id;
     private String nombre;
+    private String nombre1;
+    private String nombre2;
+    private String apellidos;
     private String email;
     private Role role;
     private String dni;
@@ -37,14 +40,17 @@ public class PerfilDTO {
     private String ciudad;
     private String provincia;
 
-    private String empresaNombre;
-    private String empresaCif;
-    private String empresaDireccion;
-    private String empresaTelefono;
+    private String calle2;
+    private String numero2;
+    private String piso2;
+    private String codigoPostal2;
+    private String ciudad2;
+    private String provincia2;
 
     private String grupoSanguineo;
     private String alergias;
     private String contactoEmergenciaNombre;
     private String contactoEmergenciaTelefono;
     private String seguroMedico;
+    private Boolean activa;
 }

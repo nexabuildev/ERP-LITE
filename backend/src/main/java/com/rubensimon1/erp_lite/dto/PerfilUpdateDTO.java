@@ -13,11 +13,18 @@ public class PerfilUpdateDTO {
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
+    private String nombre1;
+    private String nombre2;
+    private String apellidos;
+
     private String dni;
     private String numeroSeguridadSocial;
 
     private TipoTrabajador tipoTrabajador;
     private Genero genero;
+
+    private String categoriaProfesional;
+    private Double salarioBrutoAnual;
 
     // Solo se usan si tipoTrabajador = AUTONOMO
     private String nif;
@@ -31,10 +38,12 @@ public class PerfilUpdateDTO {
     private String ciudad;
     private String provincia;
 
-    private String empresaNombre;
-    private String empresaCif;
-    private String empresaDireccion;
-    private String empresaTelefono;
+    private String calle2;
+    private String numero2;
+    private String piso2;
+    private String codigoPostal2;
+    private String ciudad2;
+    private String provincia2;
 
     private String grupoSanguineo;
     private String alergias;

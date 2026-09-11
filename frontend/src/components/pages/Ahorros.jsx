@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { crearMetaAhorro, getMisMetasAhorro, editarMetaAhorro, aportarAhorro, retirarAhorro, eliminarMetaAhorro, getMisCuentasBancarias } from '../../api'
+import { formatDate } from '../../utils/date'
 
 function Ahorros() {
   const { token } = useOutletContext()
@@ -209,7 +210,7 @@ function Ahorros() {
             <div key={m.id} className="card report-card">
               <div className="report-card-header">
                 <h2>{m.nombre}</h2>
-                <span className="muted">{m.fechaObjetivo ? `Objetivo: ${m.fechaObjetivo}` : 'Sin fecha límite'}</span>
+                <span className="muted">{m.fechaObjetivo ? `Objetivo: ${formatDate(m.fechaObjetivo)}` : 'Sin fecha límite'}</span>
               </div>
 
               <div className="progress-wrap">

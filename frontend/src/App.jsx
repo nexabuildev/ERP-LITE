@@ -10,6 +10,8 @@ import Nominas from './components/pages/Nominas'
 import RegistroRetributivo from './components/pages/RegistroRetributivo'
 import Declaraciones from './components/pages/Declaraciones'
 import Teletrabajo from './components/pages/Teletrabajo'
+import Empresas from './components/pages/Empresas'
+import Paro from './components/pages/Paro'
 import Perfil from './components/pages/Perfil'
 import AdminVacaciones from './components/pages/AdminVacaciones'
 import Movimientos from './components/pages/Movimientos'
@@ -48,6 +50,8 @@ function App() {
           <Route path="/registro-retributivo" element={<RegistroRetributivo />} />
           <Route path="/declaraciones" element={<Declaraciones />} />
           <Route path="/teletrabajo" element={<Teletrabajo />} />
+          <Route path="/empresas" element={<Empresas />} />
+          <Route path="/paro" element={<Paro />} />
           <Route path="/movimientos" element={<Movimientos />} />
           <Route path="/ahorros" element={<Ahorros />} />
           <Route path="/cuentas-bancarias" element={<CuentasBancarias />} />

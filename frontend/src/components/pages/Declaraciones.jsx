@@ -1,13 +1,19 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import {
   getMisDeclaraciones,
   registrarDeclaracionPresentada,
   getMisDeclaracionesPresentadas,
   eliminarDeclaracionPresentada,
+  abrirArchivoDeclaracion,
 } from '../../api'
+import DocPreview from '../DocPreview'
+import { formatDate, hoyISO } from '../../utils/date'
 
-const hoyISO = () => new Date().toISOString().slice(0, 10)
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
 
 function Declaraciones() {
   const { token } = useOutletContext()
@@ -18,6 +24,7 @@ function Declaraciones() {
   const [fechaPresentacion, setFechaPresentacion] = useState(hoyISO())
   const [importe, setImporte] = useState('')
   const [notas, setNotas] = useState('')
+  const [archivo, setArchivo] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -28,22 +35,41 @@ function Declaraciones() {
 
   useEffect(cargar, [cargar])
 
+  const gruposPorAnio = useMemo(() => {
+    const porAnio = new Map()
+    for (const p of presentadas) {
+      const fecha = new Date(p.fechaPresentacion)
+      const anio = fecha.getFullYear()
+      if (!porAnio.has(anio)) porAnio.set(anio, [])
+      porAnio.get(anio).push({ ...p, _mes: fecha.getMonth() })
+    }
+    return [...porAnio.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([anio, items]) => ({
+        anio,
+        items: items.sort((a, b) => new Date(b.fechaPresentacion) - new Date(a.fechaPresentacion)),
+      }))
+  }, [presentadas])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
-      await registrarDeclaracionPresentada(token, {
-        modelo,
-        periodo,
-        fechaPresentacion,
-        importe: importe === '' ? null : Number(importe),
-        notas,
-      })
+      const formData = new FormData()
+      formData.append('modelo', modelo)
+      formData.append('periodo', periodo)
+      formData.append('fechaPresentacion', fechaPresentacion)
+      if (importe !== '') formData.append('importe', importe)
+      if (notas) formData.append('notas', notas)
+      if (archivo) formData.append('archivo', archivo)
+
+      await registrarDeclaracionPresentada(token, formData)
       setModelo('')
       setPeriodo('')
       setImporte('')
       setNotas('')
+      setArchivo(null)
       cargar()
     } catch (err) {
       setError(err.message)
@@ -57,6 +83,15 @@ function Declaraciones() {
     try {
       await eliminarDeclaracionPresentada(token, id)
       cargar()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const verArchivo = async (id) => {
+    try {
+      const url = await abrirArchivoDeclaracion(token, id)
+      window.open(url, '_blank')
     } catch (err) {
       setError(err.message)
     }
@@ -79,7 +114,7 @@ function Declaraciones() {
             <div>
               <h3>{d.nombre}</h3>
               <p className="muted">{d.descripcion}</p>
-              <p className="muted">Fecha límite: {d.fechaLimite}</p>
+              <p className="muted">Fecha límite: {formatDate(d.fechaLimite)}</p>
             </div>
           </div>
         ))}
@@ -108,47 +143,52 @@ function Declaraciones() {
             <label>Notas (opcional)</label>
             <input type="text" value={notas} onChange={(e) => setNotas(e.target.value)} />
           </div>
+          <div className="field field-grow">
+            <label>PDF de la declaración (opcional)</label>
+            <input type="file" accept="application/pdf,image/*" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} />
+          </div>
           <button className="btn-primary" disabled={loading}>
             {loading ? 'Guardando...' : 'Registrar'}
           </button>
         </form>
       </div>
 
-      {presentadas.length > 0 && (
-        <div className="card">
-          <h2>Mis declaraciones presentadas</h2>
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Modelo</th>
-                  <th>Periodo</th>
-                  <th>Fecha</th>
-                  <th>Importe</th>
-                  <th>Notas</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {presentadas.map((p) => (
-                  <tr key={p.id}>
-                    <td className="bold">{p.modelo}</td>
-                    <td>{p.periodo}</td>
-                    <td>{p.fechaPresentacion}</td>
-                    <td>{p.importe != null ? `${p.importe.toFixed(2)} €` : '—'}</td>
-                    <td className="muted">{p.notas || '—'}</td>
-                    <td className="actions">
-                      <button className="btn-small btn-danger" onClick={() => borrar(p.id)}>
-                        Quitar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {presentadas.length === 0 && !error && <p className="empty-state">Todavía no hay declaraciones presentadas registradas.</p>}
+
+      {gruposPorAnio.map(({ anio, items }) => (
+        <div key={anio} className="doc-year-group">
+          <h2 className="doc-year-heading">Año {anio}</h2>
+          <div className="doc-row">
+            {items.map((p) => (
+              <div key={p.id} className="doc-card">
+                <DocPreview
+                  tieneArchivo={p.tieneArchivo}
+                  archivoTipo={p.archivoTipo}
+                  cargarUrl={() => abrirArchivoDeclaracion(token, p.id)}
+                  onAbrir={() => verArchivo(p.id)}
+                />
+                <div className="doc-card-label">
+                  <strong>
+                    {MESES[p._mes]} · {p.modelo}
+                  </strong>
+                  <span className="muted small">{p.periodo}</span>
+                  {p.importe != null && <span className="muted small">{p.importe.toFixed(2)} €</span>}
+                </div>
+                <div className="doc-card-actions">
+                  {p.tieneArchivo && (
+                    <button type="button" className="btn-small" onClick={() => verArchivo(p.id)}>
+                      Ver
+                    </button>
+                  )}
+                  <button type="button" className="btn-small btn-danger" onClick={() => borrar(p.id)}>
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      ))}
     </div>
   )
 }

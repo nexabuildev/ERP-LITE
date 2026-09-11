@@ -43,6 +43,13 @@ export function register(nombre, email, password) {
   })
 }
 
+export function reactivarCuentaLogin(email, password) {
+  return request('/api/v1/auth/reactivar', null, {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+}
+
 // --- PERFIL ---
 
 export function getPerfil(token) {
@@ -59,6 +66,24 @@ export function updatePerfil(token, data) {
 export function cambiarCredenciales(token, data) {
   return request('/api/v1/perfil/credenciales', token, {
     method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function desactivarCuenta(token, data) {
+  return request('/api/v1/perfil/desactivar', token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function reactivarCuentaPropia(token) {
+  return request('/api/v1/perfil/reactivar', token, { method: 'PUT' })
+}
+
+export function eliminarCuentaDefinitivamente(token, data) {
+  return request('/api/v1/perfil/eliminar', token, {
+    method: 'DELETE',
     body: JSON.stringify(data),
   })
 }
@@ -82,6 +107,13 @@ export function getResumenFichajes(token) {
 export function solicitarVacaciones(token, data) {
   return request('/api/v1/vacaciones', token, {
     method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function editarSolicitudVacaciones(token, id, data) {
+  return request(`/api/v1/vacaciones/${id}`, token, {
+    method: 'PUT',
     body: JSON.stringify(data),
   })
 }
@@ -168,11 +200,20 @@ export function getMisDeclaraciones(token) {
   return request('/api/v1/declaraciones/mias', token)
 }
 
-export function registrarDeclaracionPresentada(token, data) {
+export function registrarDeclaracionPresentada(token, formData) {
   return request('/api/v1/declaraciones/presentadas', token, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: formData,
   })
+}
+
+export async function abrirArchivoDeclaracion(token, id) {
+  const response = await fetch(`${API_URL}/api/v1/declaraciones/presentadas/${id}/archivo`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error('No se pudo cargar el archivo')
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
 }
 
 export function getMisDeclaracionesPresentadas(token) {
@@ -269,8 +310,12 @@ export function eliminarMovimiento(token, id) {
   return request(`/api/v1/movimientos/${id}`, token, { method: 'DELETE' })
 }
 
-export function getResumenMovimientos(token) {
-  return request('/api/v1/movimientos/mios/resumen', token)
+export function getResumenMovimientos(token, { mes, anio } = {}) {
+  const params = new URLSearchParams()
+  if (mes) params.set('mes', mes)
+  if (anio) params.set('anio', anio)
+  const query = params.toString()
+  return request(`/api/v1/movimientos/mios/resumen${query ? `?${query}` : ''}`, token)
 }
 
 export function getHistorialMovimientos(token) {
@@ -336,4 +381,52 @@ export function eliminarMetodoPago(token, id) {
 
 export function getMetodoPagoSensible(token, id) {
   return request(`/api/v1/metodos-pago/${id}/sensible`, token)
+}
+
+// --- EMPRESAS (historial laboral) ---
+
+export function crearEmpresa(token, data) {
+  return request('/api/v1/empresas', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getMisEmpresas(token) {
+  return request('/api/v1/empresas/mias', token)
+}
+
+export function editarEmpresa(token, id, data) {
+  return request(`/api/v1/empresas/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function eliminarEmpresa(token, id) {
+  return request(`/api/v1/empresas/${id}`, token, { method: 'DELETE' })
+}
+
+// --- PARO (desempleo) ---
+
+export function crearParo(token, data) {
+  return request('/api/v1/paro', token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getMisPeriodosParo(token) {
+  return request('/api/v1/paro/mias', token)
+}
+
+export function editarParo(token, id, data) {
+  return request(`/api/v1/paro/${id}`, token, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+export function eliminarParo(token, id) {
+  return request(`/api/v1/paro/${id}`, token, { method: 'DELETE' })
 }

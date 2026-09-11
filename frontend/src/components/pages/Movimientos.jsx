@@ -8,8 +8,14 @@ import {
   getMisCuentasBancarias,
   getMisMetodosPago,
 } from '../../api'
+import { formatDate, hoyISO } from '../../utils/date'
 
-const hoyISO = () => new Date().toISOString().slice(0, 10)
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
+const ANIO_ACTUAL = new Date().getFullYear()
+const ANIOS_FILTRO = Array.from({ length: 6 }, (_, i) => ANIO_ACTUAL - i)
 
 // El origen se guarda como "cuenta:<id>" o "metodo:<id>" en un único <select>
 function origenAValor(cuentaBancariaId, metodoPagoId) {
@@ -69,16 +75,19 @@ function Movimientos() {
   const [origen, setOrigen] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [filtroMes, setFiltroMes] = useState('')
+  const [filtroAnio, setFiltroAnio] = useState('')
 
   const [editandoId, setEditandoId] = useState(null)
   const [editForm, setEditForm] = useState(null)
   const [guardandoEdicion, setGuardandoEdicion] = useState(false)
 
   const cargar = useCallback(() => {
-    getResumenMovimientos(token).then(setResumen).catch((err) => setError(err.message))
+    const filtro = filtroMes && filtroAnio ? { mes: Number(filtroMes), anio: Number(filtroAnio) } : {}
+    getResumenMovimientos(token, filtro).then(setResumen).catch((err) => setError(err.message))
     getMisCuentasBancarias(token).then(setCuentas).catch(() => {})
     getMisMetodosPago(token).then(setMetodos).catch(() => {})
-  }, [token])
+  }, [token, filtroMes, filtroAnio])
 
   useEffect(cargar, [cargar])
 
@@ -210,6 +219,34 @@ function Movimientos() {
         </form>
       </div>
 
+      <div className="card">
+        <h2>Filtrar por mes</h2>
+        <div className="inline-form">
+          <div className="field">
+            <label>Mes</label>
+            <select value={filtroMes} onChange={(e) => setFiltroMes(e.target.value)}>
+              <option value="">Todos</option>
+              {MESES.map((nombre, i) => (
+                <option key={nombre} value={i + 1}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Año</label>
+            <select value={filtroAnio} onChange={(e) => setFiltroAnio(e.target.value)}>
+              <option value="">Todos</option>
+              {ANIOS_FILTRO.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
       {resumen?.movimientos?.length > 0 && (
         <div className="card">
           <h2>Extracto</h2>
@@ -263,7 +300,7 @@ function Movimientos() {
                   <div className="ledger-info">
                     <span className="ledger-concepto">{m.concepto}</span>
                     <span className="muted small">
-                      {m.fecha} · <span className={`badge badge-${m.medioPago.toLowerCase()}`}>{m.medioPago}</span>
+                      {formatDate(m.fecha)} · <span className={`badge badge-${m.medioPago.toLowerCase()}`}>{m.medioPago}</span>
                       {(m.cuentaBancariaAlias || m.metodoPagoAlias) && ` · ${m.cuentaBancariaAlias || m.metodoPagoAlias}`}
                     </span>
                   </div>
@@ -287,7 +324,9 @@ function Movimientos() {
       )}
 
       {resumen && resumen.movimientos.length === 0 && (
-        <p className="empty-state">Todavía no has registrado movimientos.</p>
+        <p className="empty-state">
+          {filtroMes && filtroAnio ? 'No hay movimientos en ese mes.' : 'Todavía no has registrado movimientos.'}
+        </p>
       )}
     </div>
   )

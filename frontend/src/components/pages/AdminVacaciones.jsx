@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { getVacacionesPendientes, aprobarVacaciones, rechazarVacaciones } from '../../api'
+import { formatDate } from '../../utils/date'
 
 function AdminVacaciones() {
   const { token } = useOutletContext()
@@ -56,8 +57,8 @@ function AdminVacaciones() {
               {pendientes.map((s) => (
                 <tr key={s.id}>
                   <td className="bold">{s.empleadoNombre}</td>
-                  <td>{s.fechaInicio}</td>
-                  <td>{s.fechaFin}</td>
+                  <td>{formatDate(s.fechaInicio)}</td>
+                  <td>{formatDate(s.fechaFin)}</td>
                   <td className="muted">{s.motivo || '—'}</td>
                   <td className="actions">
                     <button

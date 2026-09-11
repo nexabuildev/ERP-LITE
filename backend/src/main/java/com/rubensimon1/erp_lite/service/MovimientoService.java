@@ -1,6 +1,7 @@
 package com.rubensimon1.erp_lite.service;
 
 import com.rubensimon1.erp_lite.dto.HistorialMovimientosDTO;
+import com.rubensimon1.erp_lite.dto.IncrementoGastoDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoDTO;
 import com.rubensimon1.erp_lite.dto.MovimientoInputDTO;
 import com.rubensimon1.erp_lite.dto.PuntoHistorialDTO;
@@ -69,8 +70,15 @@ public class MovimientoService {
         movimientoRepository.delete(movimiento);
     }
 
-    public ResumenMovimientosDTO resumen(Empleado empleado) {
-        List<Movimiento> movimientos = movimientoRepository.findByEmpleadoOrderByFechaDescIdDesc(empleado);
+    public ResumenMovimientosDTO resumen(Empleado empleado, Integer mes, Integer anio) {
+        List<Movimiento> movimientos;
+        if (mes != null && anio != null) {
+            YearMonth periodo = YearMonth.of(anio, mes);
+            movimientos = movimientoRepository.findByEmpleadoAndFechaBetweenOrderByFechaDescIdDesc(
+                    empleado, periodo.atDay(1), periodo.atEndOfMonth());
+        } else {
+            movimientos = movimientoRepository.findByEmpleadoOrderByFechaDescIdDesc(empleado);
+        }
 
         double totalIngresos = movimientos.stream()
                 .filter(m -> m.getTipo() == TipoMovimiento.INGRESO)
@@ -143,6 +151,46 @@ public class MovimientoService {
                 .puntos(puntos)
                 .variacionPorcentaje(variacion)
                 .build();
+    }
+
+    // Compara los dos gastos mas recientes de cada concepto repetido (misma
+    // etiqueta, sin distinguir mayusculas) y avisa si el importe ha subido.
+    // Simplificacion deliberada: no hay un flag de "gasto recurrente" en el
+    // modelo, asi que cualquier concepto que se repita se trata como tal.
+    public List<IncrementoGastoDTO> detectarIncrementos(Empleado empleado) {
+        List<Movimiento> gastos = movimientoRepository.findByEmpleadoOrderByFechaDescIdDesc(empleado)
+                .stream()
+                .filter(m -> m.getTipo() == TipoMovimiento.GASTO)
+                .collect(Collectors.toList());
+
+        Map<String, List<Movimiento>> porConcepto = gastos.stream()
+                .collect(Collectors.groupingBy(m -> m.getConcepto().trim().toLowerCase()));
+
+        List<IncrementoGastoDTO> incrementos = new ArrayList<>();
+        for (List<Movimiento> grupo : porConcepto.values()) {
+            if (grupo.size() < 2) continue;
+
+            grupo.sort(java.util.Comparator.comparing(Movimiento::getFecha).thenComparing(Movimiento::getId));
+            Movimiento anterior = grupo.get(grupo.size() - 2);
+            Movimiento actual = grupo.get(grupo.size() - 1);
+
+            if (anterior.getImporte() <= 0 || actual.getImporte() <= anterior.getImporte()) continue;
+
+            double porcentaje = redondear(((actual.getImporte() - anterior.getImporte()) / anterior.getImporte()) * 100.0);
+            if (porcentaje < 1.0) continue; // ruido de decimales, no una subida real
+
+            incrementos.add(IncrementoGastoDTO.builder()
+                    .concepto(actual.getConcepto())
+                    .fechaAnterior(anterior.getFecha())
+                    .importeAnterior(anterior.getImporte())
+                    .fechaActual(actual.getFecha())
+                    .importeActual(actual.getImporte())
+                    .incrementoPorcentaje(porcentaje)
+                    .build());
+        }
+
+        incrementos.sort((a, b) -> Double.compare(b.getIncrementoPorcentaje(), a.getIncrementoPorcentaje()));
+        return incrementos;
     }
 
     private String capitalizar(String texto) {

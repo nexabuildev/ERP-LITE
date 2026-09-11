@@ -15,5 +15,6 @@ public class ResumenCuentasDTO {
     private double totalGeneral;
     private double totalBanco;
     private double totalEfectivo;
+    private double totalPaypal;
     private List<CuentaBancariaDTO> cuentas;
 }

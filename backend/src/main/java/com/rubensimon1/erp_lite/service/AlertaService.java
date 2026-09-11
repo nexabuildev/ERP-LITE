@@ -6,6 +6,7 @@ import com.rubensimon1.erp_lite.dto.ResumenAlertasDTO;
 import com.rubensimon1.erp_lite.entity.Alerta;
 import com.rubensimon1.erp_lite.entity.Empleado;
 import com.rubensimon1.erp_lite.entity.EstadoAlerta;
+import com.rubensimon1.erp_lite.entity.TipoAlerta;
 import com.rubensimon1.erp_lite.repository.AlertaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,8 @@ public class AlertaService {
         alerta.setTitulo(input.getTitulo());
         alerta.setFechaVencimiento(input.getFechaVencimiento());
         alerta.setNotas(input.getNotas());
+        alerta.setTipo(input.getTipo() != null ? input.getTipo() : TipoAlerta.RECORDATORIO);
+        alerta.setFechaCita(alerta.getTipo() == TipoAlerta.CITA_PREVIA ? input.getFechaCita() : null);
 
         alertaRepository.save(alerta);
         return toDTO(alerta);
@@ -41,6 +44,8 @@ public class AlertaService {
         alerta.setTitulo(input.getTitulo());
         alerta.setFechaVencimiento(input.getFechaVencimiento());
         alerta.setNotas(input.getNotas());
+        alerta.setTipo(input.getTipo() != null ? input.getTipo() : TipoAlerta.RECORDATORIO);
+        alerta.setFechaCita(alerta.getTipo() == TipoAlerta.CITA_PREVIA ? input.getFechaCita() : null);
 
         alertaRepository.save(alerta);
         return toDTO(alerta);
@@ -92,6 +97,8 @@ public class AlertaService {
                 .notas(a.getNotas())
                 .diasRestantes(dias)
                 .estado(estado)
+                .tipo(a.getTipo() != null ? a.getTipo() : TipoAlerta.RECORDATORIO)
+                .fechaCita(a.getFechaCita())
                 .build();
     }
 }

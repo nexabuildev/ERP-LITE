@@ -4,6 +4,8 @@ import { anadirCuentaBancaria, editarCuentaBancaria, eliminarCuentaBancaria, get
 
 const VACIO = { alias: '', categoria: 'BANCO', tipoCuenta: 'PRINCIPAL', iban: '', banco: '', saldoActual: '' }
 
+const ETIQUETAS_CATEGORIA = { BANCO: 'Banco', EFECTIVO: 'Efectivo', PAYPAL: 'PayPal' }
+
 function CuentasBancarias() {
   const { token } = useOutletContext()
   const [resumen, setResumen] = useState(null)
@@ -44,7 +46,6 @@ function CuentasBancarias() {
       tipoCuenta: c.tipoCuenta,
       iban: c.iban || '',
       banco: c.banco || '',
-      saldoActual: c.saldoActual,
     })
   }
 
@@ -57,7 +58,8 @@ function CuentasBancarias() {
     setError(null)
     setGuardandoEdicion(true)
     try {
-      await editarCuentaBancaria(token, id, { ...editForm, saldoActual: Number(editForm.saldoActual) || 0 })
+      // El saldo no se edita aquí: solo cambia por movimientos, ajustes y aportaciones de ahorro.
+      await editarCuentaBancaria(token, id, editForm)
       cancelarEdicion()
       cargar()
     } catch (err) {
@@ -103,6 +105,10 @@ function CuentasBancarias() {
             <span className="stat-block-label">En efectivo</span>
             <span className="stat-block-value">{resumen.totalEfectivo.toFixed(2)} €</span>
           </div>
+          <div className="stat-block">
+            <span className="stat-block-label">En PayPal</span>
+            <span className="stat-block-value">{resumen.totalPaypal.toFixed(2)} €</span>
+          </div>
         </div>
       )}
 
@@ -114,6 +120,7 @@ function CuentasBancarias() {
             <select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value })}>
               <option value="BANCO">Cuenta bancaria</option>
               <option value="EFECTIVO">Efectivo</option>
+              <option value="PAYPAL">PayPal</option>
             </select>
           </div>
           <div className="field">
@@ -164,6 +171,7 @@ function CuentasBancarias() {
                     <select value={editForm.categoria} onChange={(e) => setEditForm({ ...editForm, categoria: e.target.value })}>
                       <option value="BANCO">Cuenta bancaria</option>
                       <option value="EFECTIVO">Efectivo</option>
+                      <option value="PAYPAL">PayPal</option>
                     </select>
                   </div>
                   <div className="field">
@@ -190,10 +198,9 @@ function CuentasBancarias() {
                       </div>
                     </>
                   )}
-                  <div className="field">
-                    <label>Saldo actual (€)</label>
-                    <input type="number" step="0.01" value={editForm.saldoActual} onChange={(e) => setEditForm({ ...editForm, saldoActual: e.target.value })} />
-                  </div>
+                  <p className="muted small" style={{ width: '100%', margin: 0 }}>
+                    Saldo actual: <strong>{c.saldoActual.toFixed(2)} €</strong> — solo cambia con movimientos, ajustes o aportaciones de ahorro.
+                  </p>
                   <button className="btn-small" disabled={guardandoEdicion} onClick={() => guardarEdicion(c.id)}>
                     Guardar
                   </button>
@@ -207,7 +214,7 @@ function CuentasBancarias() {
                 <div className="report-card-header">
                   <h2>{c.alias}</h2>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <span className="badge badge-normal">{c.categoria === 'BANCO' ? 'Banco' : 'Efectivo'}</span>
+                    <span className="badge badge-normal">{ETIQUETAS_CATEGORIA[c.categoria] || c.categoria}</span>
                     <span className={`badge ${c.tipoCuenta === 'PRINCIPAL' ? 'badge-aprobada' : 'badge-pendiente'}`}>{c.tipoCuenta}</span>
                   </div>
                 </div>

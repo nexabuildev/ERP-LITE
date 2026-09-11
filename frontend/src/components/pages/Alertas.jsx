@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { crearAlerta, editarAlerta, eliminarAlerta, getResumenAlertas } from '../../api'
-
-const hoyISO = () => new Date().toISOString().slice(0, 10)
+import { formatDate, hoyISO } from '../../utils/date'
 
 function Alertas() {
   const { token } = useOutletContext()
@@ -10,6 +9,8 @@ function Alertas() {
   const [titulo, setTitulo] = useState('')
   const [fechaVencimiento, setFechaVencimiento] = useState(hoyISO())
   const [notas, setNotas] = useState('')
+  const [tipo, setTipo] = useState('RECORDATORIO')
+  const [fechaCita, setFechaCita] = useState(hoyISO())
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -28,7 +29,13 @@ function Alertas() {
     setError(null)
     setLoading(true)
     try {
-      await crearAlerta(token, { titulo, fechaVencimiento, notas })
+      await crearAlerta(token, {
+        titulo,
+        fechaVencimiento,
+        notas,
+        tipo,
+        fechaCita: tipo === 'CITA_PREVIA' ? fechaCita : null,
+      })
       setTitulo('')
       setNotas('')
       cargar()
@@ -41,7 +48,13 @@ function Alertas() {
 
   const empezarEdicion = (a) => {
     setEditandoId(a.id)
-    setEditForm({ titulo: a.titulo, fechaVencimiento: a.fechaVencimiento, notas: a.notas || '' })
+    setEditForm({
+      titulo: a.titulo,
+      fechaVencimiento: a.fechaVencimiento,
+      notas: a.notas || '',
+      tipo: a.tipo || 'RECORDATORIO',
+      fechaCita: a.fechaCita || hoyISO(),
+    })
   }
 
   const cancelarEdicion = () => {
@@ -53,7 +66,10 @@ function Alertas() {
     setError(null)
     setGuardandoEdicion(true)
     try {
-      await editarAlerta(token, id, editForm)
+      await editarAlerta(token, id, {
+        ...editForm,
+        fechaCita: editForm.tipo === 'CITA_PREVIA' ? editForm.fechaCita : null,
+      })
       cancelarEdicion()
       cargar()
     } catch (err) {
@@ -113,6 +129,19 @@ function Alertas() {
             <label>Fecha de vencimiento</label>
             <input type="date" value={fechaVencimiento} onChange={(e) => setFechaVencimiento(e.target.value)} required />
           </div>
+          <div className="field">
+            <label>Tipo</label>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              <option value="RECORDATORIO">Recordatorio</option>
+              <option value="CITA_PREVIA">Cita previa</option>
+            </select>
+          </div>
+          {tipo === 'CITA_PREVIA' && (
+            <div className="field">
+              <label>Fecha de la cita</label>
+              <input type="date" value={fechaCita} onChange={(e) => setFechaCita(e.target.value)} required />
+            </div>
+          )}
           <div className="field field-grow">
             <label>Notas (opcional)</label>
             <input type="text" value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Ej: pedir cita previa" />
@@ -144,6 +173,19 @@ function Alertas() {
                       onChange={(e) => setEditForm({ ...editForm, fechaVencimiento: e.target.value })}
                     />
                   </div>
+                  <div className="field">
+                    <label>Tipo</label>
+                    <select value={editForm.tipo} onChange={(e) => setEditForm({ ...editForm, tipo: e.target.value })}>
+                      <option value="RECORDATORIO">Recordatorio</option>
+                      <option value="CITA_PREVIA">Cita previa</option>
+                    </select>
+                  </div>
+                  {editForm.tipo === 'CITA_PREVIA' && (
+                    <div className="field">
+                      <label>Fecha de la cita</label>
+                      <input type="date" value={editForm.fechaCita} onChange={(e) => setEditForm({ ...editForm, fechaCita: e.target.value })} />
+                    </div>
+                  )}
                   <div className="field field-grow">
                     <label>Notas</label>
                     <input type="text" value={editForm.notas} onChange={(e) => setEditForm({ ...editForm, notas: e.target.value })} />
@@ -160,18 +202,22 @@ function Alertas() {
               <div key={a.id} className="card report-card">
                 <div className="report-card-header">
                   <h2>{a.titulo}</h2>
-                  <span
-                    className={`badge badge-${a.estado.toLowerCase() === 'vencida' ? 'rechazada' : a.estado.toLowerCase() === 'proxima' ? 'pendiente' : 'aprobada'}`}
-                  >
-                    {a.estado === 'VENCIDA'
-                      ? `Vencida hace ${Math.abs(a.diasRestantes)} días`
-                      : a.estado === 'PROXIMA'
-                        ? `En ${a.diasRestantes} días`
-                        : 'Vigente'}
-                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {a.tipo === 'CITA_PREVIA' && <span className="badge badge-normal">Cita previa</span>}
+                    <span
+                      className={`badge badge-${a.estado.toLowerCase() === 'vencida' ? 'rechazada' : a.estado.toLowerCase() === 'proxima' ? 'pendiente' : 'aprobada'}`}
+                    >
+                      {a.estado === 'VENCIDA'
+                        ? `Vencida hace ${Math.abs(a.diasRestantes)} días`
+                        : a.estado === 'PROXIMA'
+                          ? `En ${a.diasRestantes} días`
+                          : 'Vigente'}
+                    </span>
+                  </div>
                 </div>
                 <p className="muted">
-                  Vence el {a.fechaVencimiento}
+                  Vence el {formatDate(a.fechaVencimiento)}
+                  {a.tipo === 'CITA_PREVIA' && a.fechaCita ? ` · Cita el ${formatDate(a.fechaCita)}` : ''}
                   {a.notas ? ` · ${a.notas}` : ''}
                 </p>
                 <div className="inline-form" style={{ marginTop: 12 }}>

@@ -32,6 +32,11 @@ public class Empleado implements UserDetails {
 
     private String nombre;
 
+    // --- NOMBRE DESGLOSADO (para edición desde Perfil; "nombre" se mantiene sincronizado) ---
+    private String nombre1;
+    private String nombre2;
+    private String apellidos;
+
     @Column(unique = true)
     private String email;   // El email no puede repetirse, será nuestro "Usuario" para el login
 
@@ -82,11 +87,13 @@ public class Empleado implements UserDetails {
     private String ciudad;
     private String provincia;
 
-    // --- EMPRESA (informativo, introducido a mano por el ciudadano) ---
-    private String empresaNombre;
-    private String empresaCif;
-    private String empresaDireccion;
-    private String empresaTelefono;
+    // --- SEGUNDA VIVIENDA (opcional) ---
+    private String calle2;
+    private String numero2;
+    private String piso2;
+    private String codigoPostal2;
+    private String ciudad2;
+    private String provincia2;
 
     // --- DATOS MÉDICOS (ficha de emergencia) ---
     @Convert(converter = CryptoConverter.class)
@@ -101,6 +108,10 @@ public class Empleado implements UserDetails {
     private String contactoEmergenciaTelefono;
 
     private String seguroMedico;
+
+    // --- ESTADO DE LA CUENTA ---
+    @Builder.Default
+    private Boolean activa = true; // false = "eliminada temporalmente" (desactivada, se puede reactivar)
 
     // --- MÉTODOS DE USER DETAILS (Contrato de Seguridad) ---
 
@@ -145,8 +156,8 @@ public class Empleado implements UserDetails {
     }
 
     @Override
-    public boolean isEnabled() 
+    public boolean isEnabled()
     {
-        return true;
+        return activa == null || activa;
     }
 }

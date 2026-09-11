@@ -1,6 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { solicitarVacaciones, getMisVacaciones, getSaldoVacaciones, ajustarVacaciones, getDesgloseVacaciones } from '../../api'
+import {
+  solicitarVacaciones,
+  getMisVacaciones,
+  getSaldoVacaciones,
+  ajustarVacaciones,
+  getDesgloseVacaciones,
+  editarSolicitudVacaciones,
+} from '../../api'
+import { formatDate } from '../../utils/date'
+
+function diasEntre(desde, hasta) {
+  const inicio = new Date(`${desde}T00:00:00`)
+  const fin = new Date(`${hasta}T00:00:00`)
+  return Math.round((fin - inicio) / (1000 * 60 * 60 * 24)) + 1
+}
 
 function Vacaciones() {
   const { token } = useOutletContext()
@@ -12,9 +26,19 @@ function Vacaciones() {
   const [motivo, setMotivo] = useState('')
   const [ajusteDias, setAjusteDias] = useState('')
   const [ajusteConcepto, setAjusteConcepto] = useState('')
+  const [disfruteInicio, setDisfruteInicio] = useState('')
+  const [disfruteFin, setDisfruteFin] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [ajustando, setAjustando] = useState(false)
+  const [marcandoDisfrute, setMarcandoDisfrute] = useState(false)
+
+  const [editandoId, setEditandoId] = useState(null)
+  const [editFechaInicio, setEditFechaInicio] = useState('')
+  const [editFechaFin, setEditFechaFin] = useState('')
+  const [editMotivo, setEditMotivo] = useState('')
+  const [editError, setEditError] = useState(null)
+  const [editLoading, setEditLoading] = useState(false)
 
   const cargar = useCallback(() => {
     Promise.all([getSaldoVacaciones(token), getMisVacaciones(token), getDesgloseVacaciones(token)])
@@ -42,6 +66,58 @@ function Vacaciones() {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const empezarEdicion = (s) => {
+    setEditandoId(s.id)
+    setEditFechaInicio(s.fechaInicio)
+    setEditFechaFin(s.fechaFin)
+    setEditMotivo(s.motivo || '')
+    setEditError(null)
+  }
+
+  const cancelarEdicion = () => {
+    setEditandoId(null)
+    setEditError(null)
+  }
+
+  const guardarEdicion = async (id) => {
+    setEditError(null)
+    setEditLoading(true)
+    try {
+      await editarSolicitudVacaciones(token, id, {
+        fechaInicio: editFechaInicio,
+        fechaFin: editFechaFin,
+        motivo: editMotivo,
+      })
+      setEditandoId(null)
+      cargar()
+    } catch (err) {
+      setEditError(err.message)
+    } finally {
+      setEditLoading(false)
+    }
+  }
+
+  const handleMarcarDisfrutados = async (e) => {
+    e.preventDefault()
+    setError(null)
+    setMarcandoDisfrute(true)
+    try {
+      const dias = diasEntre(disfruteInicio, disfruteFin)
+      if (dias <= 0) throw new Error('La fecha de fin debe ser posterior o igual a la de inicio')
+      await ajustarVacaciones(token, {
+        dias: -dias,
+        concepto: `Días disfrutados (${formatDate(disfruteInicio)} a ${formatDate(disfruteFin)})`,
+      })
+      setDisfruteInicio('')
+      setDisfruteFin('')
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setMarcandoDisfrute(false)
     }
   }
 
@@ -115,6 +191,26 @@ function Vacaciones() {
       </div>
 
       <div className="card">
+        <h2>Marcar días disfrutados</h2>
+        <p className="muted small" style={{ marginTop: -8 }}>
+          Elige el rango de fechas que ya has disfrutado y se restan del saldo automáticamente.
+        </p>
+        <form onSubmit={handleMarcarDisfrutados} className="inline-form">
+          <div className="field">
+            <label>Desde</label>
+            <input type="date" value={disfruteInicio} onChange={(e) => setDisfruteInicio(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label>Hasta</label>
+            <input type="date" value={disfruteFin} onChange={(e) => setDisfruteFin(e.target.value)} required />
+          </div>
+          <button className="btn-primary" disabled={marcandoDisfrute}>
+            {marcandoDisfrute ? 'Guardando...' : 'Marcar disfrutados'}
+          </button>
+        </form>
+      </div>
+
+      <div className="card">
         <h2>Ajustar saldo a mano</h2>
         <p className="muted small" style={{ marginTop: -8 }}>
           Suma días extra (ej: convenio, compensación) o resta (ej: permiso sin sueldo).
@@ -143,6 +239,7 @@ function Vacaciones() {
       {solicitudes.length > 0 && (
         <div className="card">
           <h2>Solicitudes</h2>
+          {editError && <div className="alert alert-error">⚠️ {editError}</div>}
           <div className="table-wrapper">
             <table>
               <thead>
@@ -151,19 +248,57 @@ function Vacaciones() {
                   <th>Hasta</th>
                   <th>Motivo</th>
                   <th>Estado</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {solicitudes.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.fechaInicio}</td>
-                    <td>{s.fechaFin}</td>
-                    <td className="muted">{s.motivo || '—'}</td>
-                    <td>
-                      <span className={`badge badge-${s.estado.toLowerCase()}`}>{s.estado}</span>
-                    </td>
-                  </tr>
-                ))}
+                {solicitudes.map((s) =>
+                  editandoId === s.id ? (
+                    <tr key={s.id}>
+                      <td>
+                        <input type="date" value={editFechaInicio} onChange={(e) => setEditFechaInicio(e.target.value)} />
+                      </td>
+                      <td>
+                        <input type="date" value={editFechaFin} onChange={(e) => setEditFechaFin(e.target.value)} />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          value={editMotivo}
+                          onChange={(e) => setEditMotivo(e.target.value)}
+                          placeholder="Motivo (opcional)"
+                        />
+                      </td>
+                      <td>
+                        <span className={`badge badge-${s.estado.toLowerCase()}`}>{s.estado}</span>
+                      </td>
+                      <td style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn-small" onClick={() => guardarEdicion(s.id)} disabled={editLoading}>
+                          {editLoading ? 'Guardando...' : 'Guardar'}
+                        </button>
+                        <button className="btn-small" onClick={cancelarEdicion} disabled={editLoading}>
+                          Cancelar
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={s.id}>
+                      <td>{formatDate(s.fechaInicio)}</td>
+                      <td>{formatDate(s.fechaFin)}</td>
+                      <td className="muted">{s.motivo || '—'}</td>
+                      <td>
+                        <span className={`badge badge-${s.estado.toLowerCase()}`}>{s.estado}</span>
+                      </td>
+                      <td>
+                        {s.estado === 'PENDIENTE' && (
+                          <button className="btn-small" onClick={() => empezarEdicion(s)}>
+                            Editar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>
@@ -179,7 +314,7 @@ function Vacaciones() {
                 <div className="ledger-info">
                   <span className="ledger-concepto">{d.concepto}</span>
                   <span className="muted small">
-                    {d.fecha} · <span className="badge badge-normal">{d.tipo}</span>
+                    {formatDate(d.fecha)} · <span className="badge badge-normal">{d.tipo}</span>
                   </span>
                 </div>
                 <span className={d.dias >= 0 ? 'amount-positive bold' : 'amount-negative bold'}>
